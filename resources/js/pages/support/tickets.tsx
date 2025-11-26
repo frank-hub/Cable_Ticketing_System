@@ -11,21 +11,28 @@ import {
   XCircle,
   User,
   Calendar,
-  Tag,
   MessageSquare,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Flag,
+  FileText,
+  Zap,
+  HelpCircle,
+  AlertTriangle,
+  Briefcase
 } from 'lucide-react';
-import { SupportTicketListProps, NewTicketData, Priority, Category } from '../types';
+import { SupportTicketListProps, NewTicketData, Priority, Category, TicketType, EscalationLevel } from '../types';
 
-const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTickets, setTickets }) => {
+const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTickets, setTickets, onBack }) => {
   // Ensure tickets is always an array to prevent "Cannot read properties of undefined (reading 'filter')"
   const tickets = propTickets || [];
 
   const [searchTicket, setSearchTicket] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [filterEscalation, setFilterEscalation] = useState('all');
   const [showCreateTicket, setShowCreateTicket] = useState(false);
 
   const [newTicket, setNewTicket] = useState<NewTicketData>({
@@ -35,6 +42,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
     email: '',
     subject: '',
     category: 'Connectivity',
+    ticketType: 'Support Request',
+    escalationLevel: 'Level 1',
     priority: 'Medium',
     description: '',
     assignedTo: 'John Doe'
@@ -83,6 +92,17 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
     return colors[category] ?? 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
+  const getTypeIcon = (type: TicketType) => {
+    switch (type) {
+      case 'Technical Issue': return <Zap className="w-3.5 h-3.5 text-orange-500" />;
+      case 'Support Request': return <HelpCircle className="w-3.5 h-3.5 text-blue-500" />;
+      case 'Service Request': return <FileText className="w-3.5 h-3.5 text-purple-500" />;
+      case 'Escalation': return <AlertTriangle className="w-3.5 h-3.5 text-red-600" />;
+      case 'General Inquiry': return <MessageSquare className="w-3.5 h-3.5 text-slate-500" />;
+      default: return <Ticket className="w-3.5 h-3.5 text-slate-500" />;
+    }
+  };
+
   const handleCreateTicket = () => {
     if (!newTicket.customerName || !newTicket.accountNumber || !newTicket.phone || !newTicket.subject || !newTicket.description) {
       alert('Please fill in all required fields');
@@ -109,6 +129,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
       email: '',
       subject: '',
       category: 'Connectivity',
+      ticketType: 'Support Request',
+      escalationLevel: 'Level 1',
       priority: 'Medium',
       description: '',
       assignedTo: 'John Doe'
@@ -130,15 +152,17 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
     const matchesStatus = filterStatus === 'all' || ticket.status.toLowerCase().replace(' ', '-') === filterStatus;
     const matchesPriority = filterPriority === 'all' || ticket.priority.toLowerCase() === filterPriority;
+    const matchesType = filterType === 'all' || ticket.ticketType === filterType;
+    const matchesEscalation = filterEscalation === 'all' || ticket.escalationLevel === filterEscalation;
 
-    return matchesSearch && matchesStatus && matchesPriority;
+    return matchesSearch && matchesStatus && matchesPriority && matchesType && matchesEscalation;
   });
 
   const stats = {
     total: tickets.length,
     open: tickets.filter(t => t.status === 'Open').length,
-    inProgress: tickets.filter(t => t.status === 'In Progress').length,
-    resolved: tickets.filter(t => t.status === 'Resolved').length,
+    escalated: tickets.filter(t => t.escalationLevel === 'Level 2' || t.escalationLevel === 'Level 3').length,
+    serviceRequests: tickets.filter(t => t.ticketType === 'Service Request').length,
     critical: tickets.filter(t => t.priority === 'Critical').length,
   };
 
@@ -156,15 +180,15 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
           </button>
           <div className="flex items-center text-sm text-slate-400">
             <Home className="w-4 h-4 mr-1" />
-            <span>/ Support / Tickets</span>
+            <span>/ Customer Support / Tickets</span>
           </div>
         </div>
 
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Support Tickets</h1>
-            <p className="text-slate-500">Track and manage all customer support requests</p>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Unified Support Tickets</h1>
+            <p className="text-slate-500">Manage all tickets, requests, and escalations in one place.</p>
           </div>
           <button
             onClick={() => setShowCreateTicket(true)}
@@ -178,18 +202,18 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
         {/* Stats Strip */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
-            { label: 'Total', value: stats.total, icon: Ticket, color: 'text-slate-600', bg: 'bg-slate-50' },
-            { label: 'Open', value: stats.open, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
-            { label: 'In Progress', value: stats.inProgress, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-            { label: 'Resolved', value: stats.resolved, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
-            { label: 'Critical', value: stats.critical, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' }
+            { label: 'Total Tickets', value: stats.total, icon: Ticket, color: 'text-slate-600', bg: 'bg-slate-50' },
+            { label: 'Open Issues', value: stats.open, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
+            { label: 'Escalated (Lvl 2+)', value: stats.escalated, icon: Flag, color: 'text-orange-600', bg: 'bg-orange-50' },
+            { label: 'Service Requests', value: stats.serviceRequests, icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: 'Critical Priority', value: stats.critical, icon: AlertTriangle, color: 'text-red-700', bg: 'bg-red-100' }
           ].map((stat, idx) => (
-             <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+             <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow">
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase">{stat.label}</p>
-                  <p className="text-xl font-bold text-slate-800">{stat.value}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide">{stat.label}</p>
+                  <p className="text-2xl font-bold text-slate-800 mt-1">{stat.value}</p>
                 </div>
-                <div className={`p-2 rounded-lg ${stat.bg}`}>
+                <div className={`p-2.5 rounded-lg ${stat.bg}`}>
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
              </div>
@@ -198,20 +222,44 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
         {/* Filters and Search */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col xl:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by ticket ID, subject, customer, or account..."
+                placeholder="Search tickets..."
                 className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all"
                 value={searchTicket}
                 onChange={(e) => setSearchTicket(e.target.value)}
               />
             </div>
             <div className="flex gap-3 flex-wrap">
+               <select
+                className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium min-w-[140px] bg-white"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="all">All Types</option>
+                <option value="Technical Issue">Technical</option>
+                <option value="Support Request">Support</option>
+                <option value="Service Request">Service</option>
+                <option value="Escalation">Escalation</option>
+                <option value="General Inquiry">General</option>
+              </select>
+
               <select
                 className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium min-w-[140px] bg-white"
+                value={filterEscalation}
+                onChange={(e) => setFilterEscalation(e.target.value)}
+              >
+                <option value="all">All Levels</option>
+                <option value="Level 1">Level 1 (Std)</option>
+                <option value="Level 2">Level 2 (Esc)</option>
+                <option value="Level 3">Level 3 (Crit)</option>
+              </select>
+
+              <select
+                className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium min-w-[120px] bg-white"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
@@ -221,8 +269,9 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                 <option value="resolved">Resolved</option>
                 <option value="closed">Closed</option>
               </select>
+
               <select
-                className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium min-w-[140px] bg-white"
+                className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium min-w-[120px] bg-white"
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
               >
@@ -232,10 +281,6 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
               </select>
-              <button className="px-5 py-3 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors font-medium text-sm flex items-center gap-2">
-                <Filter size={16} />
-                <span className="hidden sm:inline">More</span>
-              </button>
             </div>
           </div>
         </div>
@@ -246,12 +291,12 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">ID & Subject</span></th>
+                  <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ticket Details</span></th>
+                  <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Type / Escalation</span></th>
                   <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</span></th>
                   <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</span></th>
-                  <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Priority</span></th>
                   <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</span></th>
-                  <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Assignee</span></th>
+                  <th className="px-6 py-4 text-left"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Assigned</span></th>
                   <th className="px-6 py-4 text-center"><span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</span></th>
                 </tr>
               </thead>
@@ -271,18 +316,39 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                 ) : (
                   filteredTickets.map((ticket) => (
                     <tr key={ticket.id} className="hover:bg-slate-50/80 transition-colors group">
-                      <td className="px-6 py-5 max-w-sm">
+                      <td className="px-6 py-5 max-w-[280px]">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2 mb-1">
                              <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                 {ticket.id}
                               </span>
+                               <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border ${getPriorityColor(ticket.priority)}`}>
+                                {ticket.priority.toUpperCase()}
+                              </span>
                           </div>
-                          <p className="text-sm font-semibold text-slate-900 line-clamp-1">{ticket.subject}</p>
-                          <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <p className="text-sm font-semibold text-slate-900 line-clamp-2">{ticket.subject}</p>
+                          <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
                             <Calendar className="w-3 h-3" />
                             {ticket.lastUpdate}
                           </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col gap-2">
+                             <div className="flex items-center gap-2 text-sm text-slate-700">
+                                {getTypeIcon(ticket.ticketType)}
+                                <span className="font-medium">{ticket.ticketType}</span>
+                             </div>
+                             {ticket.escalationLevel !== 'Level 1' && (
+                                <div className={`flex items-center gap-1.5 text-xs font-semibold w-fit px-2 py-1 rounded-md ${
+                                    ticket.escalationLevel === 'Level 3'
+                                        ? 'bg-red-100 text-red-700 border border-red-200'
+                                        : 'bg-orange-50 text-orange-700 border border-orange-200'
+                                }`}>
+                                    <Flag className="w-3 h-3 fill-current" />
+                                    {ticket.escalationLevel}
+                                </div>
+                             )}
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -297,11 +363,6 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         </span>
                       </td>
                       <td className="px-6 py-5">
-                        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-full border ${getPriorityColor(ticket.priority)}`}>
-                          {ticket.priority}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ${getStatusColor(ticket.status)}`}>
                           {getStatusIcon(ticket.status)}
                           <span>{ticket.status}</span>
@@ -309,7 +370,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">
+                          <div className="w-7 h-7 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold ring-2 ring-white">
                             {ticket.assignedTo.charAt(0)}
                           </div>
                           <span className="text-sm text-slate-700">{ticket.assignedTo}</span>
@@ -463,6 +524,51 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Ticket Type <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={newTicket.ticketType}
+                        onChange={(e) => setNewTicket({ ...newTicket, ticketType: e.target.value as TicketType })}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                      >
+                        <option value="Technical Issue">Technical Issue</option>
+                        <option value="Support Request">Support Request</option>
+                        <option value="Service Request">Service Request</option>
+                        <option value="Escalation">Escalation</option>
+                        <option value="General Inquiry">General Inquiry</option>
+                      </select>
+                    </div>
+                     <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Escalation Level <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={newTicket.escalationLevel}
+                        onChange={(e) => setNewTicket({ ...newTicket, escalationLevel: e.target.value as EscalationLevel })}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                      >
+                        <option value="Level 1">Level 1 (Standard)</option>
+                        <option value="Level 2">Level 2 (Escalated)</option>
+                        <option value="Level 3">Level 3 (Critical)</option>
+                      </select>
+                    </div>
+                     <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Priority <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={newTicket.priority}
+                        onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as Priority })}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
                         Category <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -477,21 +583,6 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         <option value="Service Request">Service Request</option>
                         <option value="Installation">Installation</option>
                         <option value="Technical">Technical</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Priority <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={newTicket.priority}
-                        onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as Priority })}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
-                      >
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                        <option value="Critical">Critical</option>
                       </select>
                     </div>
                     <div>

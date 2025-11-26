@@ -3,6 +3,8 @@ import React from 'react';
 export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type Status = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
 export type Category = 'Connectivity' | 'Performance' | 'Billing' | 'Equipment' | 'Service Request' | 'Installation' | 'Technical';
+export type TicketType = 'Technical Issue' | 'Support Request' | 'Service Request' | 'Escalation' | 'General Inquiry';
+export type EscalationLevel = 'Level 1' | 'Level 2' | 'Level 3';
 
 export interface Ticket {
   id: string;
@@ -11,7 +13,9 @@ export interface Ticket {
   accountNumber: string;
   phone?: string;
   email?: string;
-  category: string;
+  category: string; // Keeps the topic/domain (e.g. Connectivity)
+  ticketType: TicketType; // New classification
+  escalationLevel: EscalationLevel; // New escalation status
   status: string;
   priority: string;
   assignedTo: string;
@@ -27,6 +31,8 @@ export interface NewTicketData {
   email: string;
   subject: string;
   category: Category;
+  ticketType: TicketType;
+  escalationLevel: EscalationLevel;
   priority: Priority;
   description: string;
   assignedTo: string;

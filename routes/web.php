@@ -7,9 +7,17 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::group(['prefix' => 'customers'], function () {
+    Route::get('list', function () {
+        return Inertia::render('customers/customers');
+    })->name('customers.index');
 
-Route::get('customers/list', function () {
-    return Inertia::render('customers/customers');
+    Route::get('installations', function () {
+        return Inertia::render('customers/installations');
+    });
+    Route::get('leads', function () {
+        return Inertia::render('customers/leads');
+    });
 });
 
 Route::get('support/tickets', function () {

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Link } from "react-router-dom";
+
 import {
   LayoutDashboard,
   Users,
@@ -159,11 +161,13 @@ const CableOneTicketingSystem = () => {
         </div>
 
         {hasSubItems && isExpanded && (
-          <a href={item.subItems.length > 0 ? item.subItems[0].path : '#'}>
-            <div className="mt-1 transition-all duration-300 ease-in-out">
-            {item.subItems.map(subItem => renderMenuItem(subItem, depth + 1))}
-          </div>
-          </a>
+            <div className="ml-4">
+                {item.subItems.map(subItem => (
+                    <a key={subItem.id || subItem.path} href={subItem.path}>
+                        {renderMenuItem(subItem, depth + 1)}
+                    </a>
+                ))}
+            </div>
         )}
       </div>
     );
@@ -294,39 +298,70 @@ const CableOneTicketingSystem = () => {
         <main className="flex-1 overflow-y-auto p-6">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <StatCard
-              title="Total Revenue"
-              value="$124,592"
-              change="12.5%"
-              isPositive={true}
-              icon={DollarSign}
-              color="bg-indigo-500"
-            />
-            <StatCard
-              title="Active Customers"
-              value="8,549"
-              change="2.4%"
-              isPositive={true}
-              icon={Users}
-              color="bg-blue-500"
-            />
-            <StatCard
-              title="Open Tickets"
-              value="142"
-              change="5.2%"
-              isPositive={false}
-              icon={Ticket}
-              color="bg-amber-500"
-            />
-            <StatCard
-              title="Network Uptime"
-              value="99.98%"
-              change="0.01%"
-              isPositive={true}
-              icon={Activity}
-              color="bg-emerald-500"
-            />
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-slate-500 mb-1">Total Tickets</p>
+              <h3 className="text-3xl font-bold text-slate-900">20</h3>
+              <div className="flex items-center mt-2 text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full w-fit">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                +12% this week
+              </div>
+            </div>
+            <div className="p-3 bg-indigo-50 rounded-xl">
+              <Users className="w-6 h-6 text-indigo-600" />
+            </div>
           </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-slate-500 mb-1">Open Issues</p>
+              <h3 className="text-3xl font-bold text-slate-900">200</h3>
+               <div className="flex items-center mt-2 text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full w-fit">
+                <Activity className="w-3 h-3 mr-1" />
+                Requires Attention
+              </div>
+            </div>
+            <div className="p-3 bg-orange-50 rounded-xl">
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-slate-500 mb-1">Resolution Rate</p>
+              <h3 className="text-3xl font-bold text-slate-900">89%</h3>
+               <div className="flex items-center mt-2 text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full w-fit">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Above Target
+              </div>
+            </div>
+            <div className="p-3 bg-green-50 rounded-xl">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-slate-500 mb-1">Avg Response</p>
+              <h3 className="text-3xl font-bold text-slate-900">2.4h</h3>
+               <div className="flex items-center mt-2 text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-1 rounded-full w-fit">
+                <Clock className="w-3 h-3 mr-1" />
+                Maintained
+              </div>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <Clock className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+      </div>
 
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

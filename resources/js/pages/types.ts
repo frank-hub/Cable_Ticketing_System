@@ -32,13 +32,53 @@ export interface NewTicketData {
   assignedTo: string;
 }
 
-
 export interface SupportTicketListProps {
   tickets: Ticket[];
   setTickets: React.Dispatch<React.SetStateAction<Ticket[]>>;
+  onBack: () => void;
 }
 
 export interface DashboardProps {
   tickets: Ticket[];
   onNavigateToTickets: () => void;
+}
+
+export interface CustomerListTableProps {
+  onBack: () => void;
+}
+
+export type InstallationStatus = 'Pending' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
+
+export interface Installation {
+  id: string;
+  customerName: string;
+  address: string;
+  contactNumber: string;
+  scheduledDate: string;
+  technician: string;
+  equipment: string;
+  status: InstallationStatus;
+  notes?: string;
+}
+
+export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Proposal Sent' | 'Converted' | 'Lost';
+
+export interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  interestLevel: 'High' | 'Medium' | 'Low';
+  status: LeadStatus;
+  source: string;
+  lastContact: string;
+  notes?: string;
+}
+
+export interface InstallationsListProps {
+  onBack: () => void;
+}
+
+export interface LeadsListProps {
+  onBack: () => void;
 }

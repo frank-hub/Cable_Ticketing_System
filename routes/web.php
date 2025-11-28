@@ -20,6 +20,16 @@ Route::group(['prefix' => 'customers'], function () {
     });
 });
 
+Route::group(['prefix' => 'settings'], function () {
+    Route::get('users', function () {
+        return Inertia::render('admin_settings/users');
+    })->name('settings.users');
+
+    Route::get('system', function () {
+        return Inertia::render('admin_settings/system');
+    });
+});
+
 Route::get('support/tickets', function () {
     return Inertia::render('support/tickets');
 });

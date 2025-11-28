@@ -88,3 +88,44 @@ export interface InstallationsListProps {
 export interface LeadsListProps {
   onBack: () => void;
 }
+
+// User & Role Management Types
+export type UserRole = 'Admin' | 'Support Agent' | 'Technician' | 'Sales' | 'Manager';
+export type UserStatus = 'Active' | 'Inactive' | 'Invited';
+
+export interface SystemUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  lastActive: string;
+  avatarUrl?: string;
+}
+
+export interface UserRolesProps {
+  onBack: () => void;
+}
+
+// System Settings Types
+export interface MessagingConfig {
+  provider: 'Twilio' | 'AfricaTalking' | 'Infobip' | 'Custom';
+  apiKey: string;
+  apiSecret: string;
+  senderId: string;
+  callbackUrl: string;
+  enabled: boolean;
+}
+
+export interface EmailConfig {
+  smtpHost: string;
+  smtpPort: string;
+  username: string;
+  password: string;
+  senderEmail: string;
+  enabled: boolean;
+}
+
+export interface SystemSettingsProps {
+  onBack: () => void;
+}

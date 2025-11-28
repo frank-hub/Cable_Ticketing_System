@@ -78,8 +78,8 @@ const CableOneTicketingSystem = () => {
       path: '/support',
       subItems: [
         { id: 'tickets', label: 'Tickets', path: '/support/tickets' },
-        { id: 'support-requests', label: 'Support Requests', path: '/support/requests' },
-        { id: 'escalations', label: 'Escalations', path: '/support/escalations' }
+        // { id: 'support-requests', label: 'Support Requests', path: '/support/requests' },
+        // { id: 'escalations', label: 'Escalations', path: '/support/escalations' }
       ]
     },
     {

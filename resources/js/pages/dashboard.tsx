@@ -82,17 +82,17 @@ const CableOneTicketingSystem = () => {
         // { id: 'escalations', label: 'Escalations', path: '/support/escalations' }
       ]
     },
-    {
-      id: 'billing',
-      label: 'Billing',
-      icon: <CreditCard size={20} />,
-      path: '/billing',
-      subItems: [
-        { id: 'invoices', label: 'Invoices', path: '/billing/invoices' },
-        { id: 'payments', label: 'Payments', path: '/billing/payments' },
-        { id: 'packages', label: 'Packages', path: '/billing/packages' }
-      ]
-    },
+    // {
+    //   id: 'billing',
+    //   label: 'Billing',
+    //   icon: <CreditCard size={20} />,
+    //   path: '/billing',
+    //   subItems: [
+    //     { id: 'invoices', label: 'Invoices', path: '/billing/invoices' },
+    //     { id: 'payments', label: 'Payments', path: '/billing/payments' },
+    //     { id: 'packages', label: 'Packages', path: '/billing/packages' }
+    //   ]
+    // },
     {
       id: 'network',
       label: 'Network',

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import {
   Ticket,
   Search,
@@ -24,9 +25,12 @@ import {
 } from 'lucide-react';
 import { SupportTicketListProps, NewTicketData, Priority, Category, TicketType, EscalationLevel } from '../types';
 
-const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTickets, setTickets, onBack }) => {
-  // Ensure tickets is always an array to prevent "Cannot read properties of undefined (reading 'filter')"
-  const tickets = propTickets || [];
+const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTickets, onBack }) => {
+
+
+  const {data} = usePage<PageProps>().props;
+  const initialTickets = propTickets || data?.data || [];
+  const [tickets, setTickets] = useState(initialTickets);
 
   const [searchTicket, setSearchTicket] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');

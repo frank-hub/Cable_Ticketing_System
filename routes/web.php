@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -8,9 +9,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::group(['prefix' => 'customers'], function () {
-    Route::get('list', function () {
-        return Inertia::render('customers/customers');
-    })->name('customers.index');
+    Route::get('list',[CustomerController::class, 'index'])->name('customers.list');
 
     Route::get('installations', function () {
         return Inertia::render('customers/installations');

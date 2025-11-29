@@ -49,9 +49,9 @@ class CustomerController extends Controller
             'data' => $customers,
             'stats' => [
                 'total' => Customer::count(),
-                'active' => Customer::active()->count(),
-                'suspended' => Customer::suspended()->count(),
-                'inactive' => Customer::inactive()->count(),
+                // 'active' => Customer::active()->count(),
+                // 'suspended' => Customer::suspended()->count(),
+                // 'inactive' => Customer::inactive()->count(),
             ]
         ]);
 
@@ -66,10 +66,13 @@ class CustomerController extends Controller
             'primary_phone' => 'required|string|max:20',
             'email_address' => 'nullable|email|max:255',
             'physical_address' => 'nullable|string',
-            'service_package' => 'required|in:Basic 20Mbps,Standard 50Mbps,Premium 100Mbps,Business 200Mbps',
-            'status' => 'required|in:Active,Suspended,Inactive',
-            'installation_date' => 'required|date',
+            'service_package' => 'required',
+            'status' => 'required',
+            'installation_date' => 'required',
         ]);
+
+        // dd($request->installation_date);
+
 
         if ($validator->fails()) {
             return response()->json([

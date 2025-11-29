@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+
+import axios from 'axios'
 import {
   Users,
   Search,
@@ -18,33 +21,23 @@ import {
   XCircle,
   Plus
 } from 'lucide-react';
+import { CustomerListTableProps } from '../types';
 
-const CustomerListTable: React.FC = () => {
+const CustomerListTable: React.FC<CustomerListTableProps> = ({ customers : propCustomers }) => {
   const [searchCustomer, setSearchCustomer] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddCustomer, setShowAddCustomer] = useState(false);
-
-  const [customers, setCustomers] = useState([
-    { id: 1, name: 'SLAUGHTERS', accountNumber: 'ACC-001', phone: '+254 700 123 456', email: 'info@slaughters.co.ke', package: 'Premium 100Mbps', status: 'Active', installationDate: '2024-01-15', lastPayment: '2024-11-01' },
-    { id: 2, name: 'PRESTIGE HOSPITAL', accountNumber: 'ACC-002', phone: '+254 700 234 567', email: 'it@prestigehosp.com', package: 'Business 200Mbps', status: 'Active', installationDate: '2024-02-20', lastPayment: '2024-11-05' },
-    { id: 3, name: 'OBAMA ESTATE', accountNumber: 'ACC-003', phone: '+254 700 345 678', email: 'admin@obamaestate.co.ke', package: 'Standard 50Mbps', status: 'Active', installationDate: '2024-03-10', lastPayment: '2024-10-28' },
-    { id: 4, name: 'KANTARAMA', accountNumber: 'ACC-004', phone: '+254 700 456 789', email: 'contact@kantarama.com', package: 'Premium 100Mbps', status: 'Suspended', installationDate: '2024-04-05', lastPayment: '2024-09-15' },
-    { id: 5, name: 'OMEGA ESTATE', accountNumber: 'ACC-005', phone: '+254 700 567 890', email: 'info@omegaestate.co.ke', package: 'Basic 20Mbps', status: 'Active', installationDate: '2024-05-12', lastPayment: '2024-11-10' },
-    { id: 6, name: 'DHAMA ESTATE', accountNumber: 'ACC-006', phone: '+254 700 678 901', email: 'admin@dhamaestate.com', package: 'Standard 50Mbps', status: 'Active', installationDate: '2024-06-18', lastPayment: '2024-11-02' },
-    { id: 7, name: 'NAIRU', accountNumber: 'ACC-007', phone: '+254 700 789 012', email: 'info@nairu.co.ke', package: 'Premium 100Mbps', status: 'Inactive', installationDate: '2024-07-22', lastPayment: '2024-08-20' },
-    { id: 8, name: 'KAHAWA', accountNumber: 'ACC-008', phone: '+254 700 890 123', email: 'contact@kahawa.com', package: 'Business 200Mbps', status: 'Active', installationDate: '2024-08-30', lastPayment: '2024-11-08' },
-    { id: 9, name: 'RIDGEWAYS', accountNumber: 'ACC-009', phone: '+254 700 901 234', email: 'info@ridgeways.co.ke', package: 'Premium 100Mbps', status: 'Active', installationDate: '2024-09-05', lastPayment: '2024-11-12' },
-    { id: 10, name: 'RUIRU ESTATE', accountNumber: 'ACC-010', phone: '+254 700 012 345', email: 'admin@ruiruestate.com', package: 'Standard 50Mbps', status: 'Active', installationDate: '2024-10-01', lastPayment: '2024-11-15' },
-  ]);
-
+  const { data } = usePage<PageProps>().props;
+  const initialCustomers = propCustomers || data?.data || [];
+  const [customers, setCustomers] = useState(initialCustomers);
   const [newCustomer, setNewCustomer] = useState({
-    name: '',
-    accountNumber: '',
-    phone: '',
-    email: '',
-    package: 'Standard 50Mbps',
+    customer_name: '',
+    account_number: '',
+    primary_phone: '',
+    email_address: '',
+    service_package: 'Standard 50Mbps',
     status: 'Active',
-    installationDate: new Date().toISOString().slice(0, 10),
+    installation_date: new Date().toISOString().slice(0, 10),
   });
 
   const getCustomerStatusColor = (status: string) => {
@@ -63,46 +56,59 @@ const CustomerListTable: React.FC = () => {
     return 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
-  const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = customer.name.toLowerCase().includes(searchCustomer.toLowerCase()) ||
-                         customer.accountNumber.toLowerCase().includes(searchCustomer.toLowerCase()) ||
-                         customer.email.toLowerCase().includes(searchCustomer.toLowerCase()) ||
-                         customer.phone.includes(searchCustomer);
-    const matchesStatus = filterStatus === 'all' || customer.status.toLowerCase() === filterStatus.toLowerCase();
-    return matchesSearch && matchesStatus;
-  });
+const customersArray = Array.isArray(data) ? data : data?.data ?? [];
+
+const filteredCustomers = customersArray.filter((customer: Customer) => {
+  const matchesSearch =
+    customer.customer_name.toLowerCase().includes(searchCustomer.toLowerCase()) ||
+    customer.account_number.toLowerCase().includes(searchCustomer.toLowerCase()) ||
+    customer.email_address?.toLowerCase().includes(searchCustomer.toLowerCase()) ||
+    customer.primary_phone.includes(searchCustomer);
+
+  const matchesStatus =
+    filterStatus === 'all' ||
+    customer.status.toLowerCase() === filterStatus.toLowerCase();
+
+  return matchesSearch && matchesStatus;
+});
+
 
   const stats = {
     total: customers.length,
-    active: customers.filter(c => c.status === 'Active').length,
-    suspended: customers.filter(c => c.status === 'Suspended').length,
-    inactive: customers.filter(c => c.status === 'Inactive').length,
+    active: customers.filter((c: { status: string; }) => c.status === 'Active').length,
+    suspended: customers.filter((c: { status: string; }) => c.status === 'Suspended').length,
+    inactive: customers.filter((c: { status: string; }) => c.status === 'Inactive').length,
   };
 
-  const handleAddCustomer = () => {
-    if (!newCustomer.name || !newCustomer.accountNumber || !newCustomer.phone) {
+  const handleAddCustomer = async() => {
+    if (!newCustomer.customer_name || !newCustomer.account_number || !newCustomer.primary_phone) {
       alert('Please fill in required fields');
       return;
     }
 
-    const customerToAdd = {
-      id: customers.length + 1,
-      ...newCustomer,
-      lastPayment: '-' // Default for new customer
-    };
+    try {
+        const response = await axios.post('/api/customers', newCustomer);
 
-    setCustomers([customerToAdd, ...customers]);
+        setCustomers([...customers, response.data]);
+
+        alert(`Customer ${newCustomer.account_number} added successfully!`);
+    }catch (error : any){
+        console.error('Error adding customer:', error);
+        alert('Failed to add customer. Please try again.');
+    }
+
     setShowAddCustomer(false);
+
 
     // Reset form
     setNewCustomer({
-      name: '',
-      accountNumber: '',
-      phone: '',
-      email: '',
-      package: 'Standard 50Mbps',
+      customer_name: '',
+      account_number: '',
+      primary_phone: '',
+      email_address: '',
+      service_package: 'Standard 50Mbps',
       status: 'Active',
-      installationDate: new Date().toISOString().slice(0, 10),
+      installation_date: new Date().toISOString().slice(0, 10),
     });
   };
 
@@ -257,30 +263,30 @@ const CustomerListTable: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredCustomers.map((customer) => (
+                  filteredCustomers.map((customer: { id: React.Key | null | undefined; customer_name: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; email_address: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; account_number: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; installation_date: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; primary_phone: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; service_package: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; status: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; lastPayment: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; }) => (
                     <tr key={customer.id} className="hover:bg-slate-50/80 transition-colors group">
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                            {customer.name.charAt(0)}
+                            {customer.customer_name.charAt(0)}
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                              {customer.name}
+                              {customer.customer_name}
                             </p>
                             <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
                               <Mail className="w-3 h-3" />
-                              {customer.email}
+                              {customer.email_address}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-5">
                         <div>
-                          <p className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 px-2 py-0.5 rounded w-fit text-center border border-slate-200">{customer.accountNumber}</p>
+                          <p className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 px-2 py-0.5 rounded w-fit text-center border border-slate-200">{customer.account_number}</p>
                           <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
                             <Calendar className="w-3 h-3" />
-                            Since {customer.installationDate}
+                            Since {customer.installation_date}
                           </div>
                         </div>
                       </td>
@@ -289,13 +295,13 @@ const CustomerListTable: React.FC = () => {
                           <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
                              <Phone className="w-3 h-3" />
                           </div>
-                          {customer.phone}
+                          {customer.primary_phone}
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border ${getPackageColor(customer.package)}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border ${getPackageColor(customer.service_package)}`}>
                           <Package className="w-3.5 h-3.5" />
-                          {customer.package}
+                          {customer.service_package}
                         </span>
                       </td>
                       <td className="px-6 py-5">
@@ -385,8 +391,8 @@ const CustomerListTable: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={newCustomer.name}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                      value={newCustomer.customer_name}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, customer_name: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       placeholder="e.g. John Doe or Acme Corp"
                     />
@@ -397,8 +403,8 @@ const CustomerListTable: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={newCustomer.accountNumber}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, accountNumber: e.target.value })}
+                      value={newCustomer.account_number}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, account_number: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       placeholder="e.g. ACC-123"
                     />
@@ -409,8 +415,8 @@ const CustomerListTable: React.FC = () => {
                     </label>
                     <input
                       type="tel"
-                      value={newCustomer.phone}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                      value={newCustomer.primary_phone}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, primary_phone: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       placeholder="+254 700 000 000"
                     />
@@ -421,8 +427,8 @@ const CustomerListTable: React.FC = () => {
                     </label>
                     <input
                       type="email"
-                      value={newCustomer.email}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                      value={newCustomer.email_address}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, email_address: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       placeholder="contact@email.com"
                     />
@@ -442,8 +448,8 @@ const CustomerListTable: React.FC = () => {
                       Service Package
                     </label>
                     <select
-                      value={newCustomer.package}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, package: e.target.value })}
+                      value={newCustomer.service_package}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, service_package: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
                     >
                       <option value="Basic 20Mbps">Basic 20Mbps</option>
@@ -472,8 +478,8 @@ const CustomerListTable: React.FC = () => {
                     </label>
                     <input
                       type="date"
-                      value={newCustomer.installationDate}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, installationDate: e.target.value })}
+                      value={newCustomer.installation_date}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, installation_date: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                     />
                   </div>

@@ -6,6 +6,19 @@ export type Category = 'Connectivity' | 'Performance' | 'Billing' | 'Equipment' 
 export type TicketType = 'Technical Issue' | 'Support Request' | 'Service Request' | 'Escalation' | 'General Inquiry';
 export type EscalationLevel = 'Level 1' | 'Level 2' | 'Level 3';
 
+export interface Customer {
+  id: number;
+  customer_name: string;
+  account_number: string;
+  primary_phone: string;
+  email_address?: string;
+  service_package: string;
+  status: string;
+  installation_date: string;
+  lastPayment?: string;
+}
+
+
 export interface Ticket {
   id: string;
   subject: string;
@@ -51,6 +64,7 @@ export interface DashboardProps {
 
 export interface CustomerListTableProps {
   onBack: () => void;
+  customers: Customer[];
 }
 
 export type InstallationStatus = 'Pending' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';

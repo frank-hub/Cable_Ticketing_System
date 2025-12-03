@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import {
   Ticket,
   Search,
@@ -40,17 +41,17 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
   const [showCreateTicket, setShowCreateTicket] = useState(false);
 
   const [newTicket, setNewTicket] = useState<NewTicketData>({
-    customerName: '',
-    accountNumber: '',
+    customer_name: '',
+    account_number: '',
     phone: '',
     email: '',
     subject: '',
     category: 'Connectivity',
-    ticketType: 'Support Request',
-    escalationLevel: 'Level 1',
+    ticket_type: 'Support Request',
+    escalation_level: 'Level 1',
     priority: 'Medium',
     description: '',
-    assignedTo: 'John Doe'
+    assigned_to: 'John Doe'
   });
 
   const getStatusColor = (status: string) => {
@@ -107,57 +108,66 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
     }
   };
 
-  const handleCreateTicket = () => {
-    if (!newTicket.customerName || !newTicket.accountNumber || !newTicket.phone || !newTicket.subject || !newTicket.description) {
+  const handleCreateTicket = async() => {
+    if (!newTicket.customer_name || !newTicket.account_number || !newTicket.phone || !newTicket.subject || !newTicket.description) {
       alert('Please fill in all required fields');
       return;
     }
 
+    try {
+        const response = await axios.post('/api/support/ticket', newTicket);
+
+        alert(`Ticket ${response.data.ticketId} created successfully`);
+    }catch(error: any) {
+        console.error('Error creating ticket',error.response);
+        alert(`Failed to create ticket: ${error.response?.data?.message || 'Unknown error'}`);
+    }
+
     const createdTicket = {
       ...newTicket,
-      id: `TK-${2400 + tickets.length + 1}`,
+      ticket_number: `TK-${2400 + tickets.length + 1}`,
       status: 'Open',
       createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
       lastUpdate: new Date().toISOString().slice(0, 16).replace('T', ' '),
-      customer: newTicket.customerName,
+      customer: newTicket.customer_name,
     };
-
     setTickets([createdTicket, ...tickets]);
+
     setShowCreateTicket(false);
 
     // Reset form
     setNewTicket({
-      customerName: '',
-      accountNumber: '',
+      customer_name: '',
+      account_number: '',
       phone: '',
       email: '',
       subject: '',
       category: 'Connectivity',
-      ticketType: 'Support Request',
-      escalationLevel: 'Level 1',
+      ticket_type: 'Support Request',
+      escalation_level: 'Level 1',
       priority: 'Medium',
       description: '',
-      assignedTo: 'John Doe'
+      assigned_to: 'John Doe'
     });
   };
 
-  const handleDeleteTicket = (id: string) => {
+  const handleDeleteTicket = (ticket_number: string) => {
     if (window.confirm('Are you sure you want to delete this ticket?')) {
-      setTickets(tickets.filter(t => t.id !== id));
+      setTickets(tickets.filter(t => t.ticket_number !== ticket_number));
     }
   };
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch =
-      ticket.id.toLowerCase().includes(searchTicket.toLowerCase()) ||
+      ticket.ticket_number.toLowerCase().includes(searchTicket.toLowerCase()) ||
       ticket.subject.toLowerCase().includes(searchTicket.toLowerCase()) ||
       ticket.customer.toLowerCase().includes(searchTicket.toLowerCase()) ||
-      ticket.accountNumber.toLowerCase().includes(searchTicket.toLowerCase());
+      ticket.account_number.toLowerCase().includes(searchTicket.toLowerCase());
 
     const matchesStatus = filterStatus === 'all' || ticket.status.toLowerCase().replace(' ', '-') === filterStatus;
     const matchesPriority = filterPriority === 'all' || ticket.priority.toLowerCase() === filterPriority;
-    const matchesType = filterType === 'all' || ticket.ticketType === filterType;
-    const matchesEscalation = filterEscalation === 'all' || ticket.escalationLevel === filterEscalation;
+    const matchesType = filterType === 'all' || ticket.ticket_type === filterType;
+    const matchesEscalation = filterEscalation === 'all' || ticket.escalation_level === filterEscalation;
 
     return matchesSearch && matchesStatus && matchesPriority && matchesType && matchesEscalation;
   });
@@ -165,8 +175,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
   const stats = {
     total: tickets.length,
     open: tickets.filter(t => t.status === 'Open').length,
-    escalated: tickets.filter(t => t.escalationLevel === 'Level 2' || t.escalationLevel === 'Level 3').length,
-    serviceRequests: tickets.filter(t => t.ticketType === 'Service Request').length,
+    escalated: tickets.filter(t => t.escalation_level === 'Level 2' || t.escalation_level === 'Level 3').length,
+    serviceRequests: tickets.filter(t => t.ticket_type === 'Service Request').length,
     critical: tickets.filter(t => t.priority === 'Critical').length,
   };
 
@@ -319,12 +329,12 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                   </tr>
                 ) : (
                   filteredTickets.map((ticket) => (
-                    <tr key={ticket.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <tr key={ticket.ticket_number} className="hover:bg-slate-50/80 transition-colors group">
                       <td className="px-6 py-5 max-w-[280px]">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2 mb-1">
                              <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                {ticket.id}
+                                {ticket.ticket_number}
                               </span>
                                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border ${getPriorityColor(ticket.priority)}`}>
                                 {ticket.priority.toUpperCase()}
@@ -340,17 +350,17 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                       <td className="px-6 py-5">
                         <div className="flex flex-col gap-2">
                              <div className="flex items-center gap-2 text-sm text-slate-700">
-                                {getTypeIcon(ticket.ticketType)}
-                                <span className="font-medium">{ticket.ticketType}</span>
+                                {getTypeIcon(ticket.ticket_type)}
+                                <span className="font-medium">{ticket.ticket_type}</span>
                              </div>
-                             {ticket.escalationLevel !== 'Level 1' && (
+                             {ticket.escalation_level !== 'Level 1' && (
                                 <div className={`flex items-center gap-1.5 text-xs font-semibold w-fit px-2 py-1 rounded-md ${
-                                    ticket.escalationLevel === 'Level 3'
+                                    ticket.escalation_level === 'Level 3'
                                         ? 'bg-red-100 text-red-700 border border-red-200'
                                         : 'bg-orange-50 text-orange-700 border border-orange-200'
                                 }`}>
                                     <Flag className="w-3 h-3 fill-current" />
-                                    {ticket.escalationLevel}
+                                    {ticket.escalation_level}
                                 </div>
                              )}
                         </div>
@@ -358,7 +368,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                       <td className="px-6 py-5">
                         <div className="flex flex-col">
                           <p className="text-sm font-medium text-slate-900">{ticket.customer}</p>
-                          <p className="text-xs text-slate-500 font-mono">{ticket.accountNumber}</p>
+                          <p className="text-xs text-slate-500 font-mono">{ticket.account_number}</p>
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -375,9 +385,9 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold ring-2 ring-white">
-                            {ticket.assignedTo.charAt(0)}
+                            {ticket.assigned_to.charAt(0)}
                           </div>
-                          <span className="text-sm text-slate-700">{ticket.assignedTo}</span>
+                          <span className="text-sm text-slate-700">{ticket.assigned_to}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -389,7 +399,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteTicket(ticket.id)}
+                            onClick={() => handleDeleteTicket(ticket.ticket_number)}
                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                             title="Delete"
                           >
@@ -460,8 +470,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                     </label>
                     <input
                       type="text"
-                      value={newTicket.customerName}
-                      onChange={(e) => setNewTicket({ ...newTicket, customerName: e.target.value })}
+                      value={newTicket.customer_name}
+                      onChange={(e) => setNewTicket({ ...newTicket, customer_name: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       placeholder="e.g. Acme Corp"
                     />
@@ -472,8 +482,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                     </label>
                     <input
                       type="text"
-                      value={newTicket.accountNumber}
-                      onChange={(e) => setNewTicket({ ...newTicket, accountNumber: e.target.value })}
+                      value={newTicket.account_number}
+                      onChange={(e) => setNewTicket({ ...newTicket, account_number: e.target.value })}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       placeholder="ACC-000"
                     />
@@ -531,8 +541,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         Ticket Type <span className="text-red-500">*</span>
                       </label>
                       <select
-                        value={newTicket.ticketType}
-                        onChange={(e) => setNewTicket({ ...newTicket, ticketType: e.target.value as TicketType })}
+                        value={newTicket.ticket_type}
+                        onChange={(e) => setNewTicket({ ...newTicket, ticket_type: e.target.value as TicketType })}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
                       >
                         <option value="Technical Issue">Technical Issue</option>
@@ -547,8 +557,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         Escalation Level <span className="text-red-500">*</span>
                       </label>
                       <select
-                        value={newTicket.escalationLevel}
-                        onChange={(e) => setNewTicket({ ...newTicket, escalationLevel: e.target.value as EscalationLevel })}
+                        value={newTicket.escalation_level}
+                        onChange={(e) => setNewTicket({ ...newTicket, escalation_level: e.target.value as EscalationLevel })}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
                       >
                         <option value="Level 1">Level 1 (Standard)</option>
@@ -594,8 +604,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         Assign To <span className="text-red-500">*</span>
                       </label>
                       <select
-                        value={newTicket.assignedTo}
-                        onChange={(e) => setNewTicket({ ...newTicket, assignedTo: e.target.value })}
+                        value={newTicket.assigned_to}
+                        onChange={(e) => setNewTicket({ ...newTicket, assigned_to: e.target.value })}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
                       >
                         <option value="John Doe">John Doe</option>

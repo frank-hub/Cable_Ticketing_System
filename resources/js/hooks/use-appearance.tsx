@@ -41,14 +41,12 @@ const handleSystemThemeChange = () => {
 };
 
 export function initializeTheme() {
-    const savedAppearance =
-        (localStorage.getItem('appearance') as Appearance) || 'system';
+    applyTheme('light'); // Force light mode always
 
-    applyTheme(savedAppearance);
-
-    // Add the event listener for system theme changes...
-    mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    // Optional: remove listener entirely
+    // mediaQuery()?.removeEventListener('change', handleSystemThemeChange);
 }
+
 
 export function useAppearance() {
     const [appearance, setAppearance] = useState<Appearance>('system');

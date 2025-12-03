@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -29,8 +30,10 @@ Route::group(['prefix' => 'settings'], function () {
     });
 });
 
-Route::get('support/tickets', function () {
-    return Inertia::render('support/tickets');
+Route::group(['prefix' => 'support'], function () {
+
+    Route::get('tickets',[TicketController::class, 'index'])->name('support.tickets');
+
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

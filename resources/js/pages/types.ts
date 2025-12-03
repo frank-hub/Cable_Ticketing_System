@@ -20,35 +20,35 @@ export interface Customer {
 
 
 export interface Ticket {
-  id: string;
+  ticket_number: string;
   subject: string;
   customer: string;
-  accountNumber: string;
+  account_number: string;
   phone?: string;
   email?: string;
   category: string; // Keeps the topic/domain (e.g. Connectivity)
-  ticketType: TicketType; // New classification
-  escalationLevel: EscalationLevel; // New escalation status
+  ticket_type: TicketType; // New classification
+  escalation_level: EscalationLevel; // New escalation status
   status: string;
   priority: string;
-  assignedTo: string;
+  assigned_to: string;
   createdAt: string;
   lastUpdate: string;
   description?: string;
 }
 
 export interface NewTicketData {
-  customerName: string;
-  accountNumber: string;
+  customer_name: string;
+  account_number: string;
   phone: string;
   email: string;
   subject: string;
   category: Category;
-  ticketType: TicketType;
-  escalationLevel: EscalationLevel;
+  ticket_type: TicketType;
+  escalation_level: EscalationLevel;
   priority: Priority;
   description: string;
-  assignedTo: string;
+  assigned_to: string;
 }
 
 export interface SupportTicketListProps {

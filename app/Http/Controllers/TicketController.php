@@ -164,11 +164,11 @@ class TicketController extends Controller
     /**
      * Display the specified ticket
      */
-    public function show(Ticket $ticket)
+    public function show($ticket_number)
     {
-        $ticket->load(['customer', 'assignedUser', 'notes.user']);
+        $ticket = Ticket::with(['customer', 'assignedUser', 'notes.user'])->where('ticket_number', $ticket_number)->firstOrFail();
 
-        return Inertia::render('support/tickets', [
+        return Inertia::render('support/ticket_details', [
             'success' => true,
             'data' => $ticket
         ]);

@@ -113,6 +113,8 @@ export interface SystemUser {
   email: string;
   role: UserRole;
   status: UserStatus;
+  password?: string;
+  confirmPassword?: string;
   lastActive: string;
   avatarUrl?: string;
 }

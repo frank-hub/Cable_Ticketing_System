@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import {
   Users,
   Search,
@@ -20,44 +22,16 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [users, setUsers] = useState<SystemUser[]>([
-    {
-      id: 'USR-001',
-      name: 'Admin User',
-      email: 'admin@nexus.com',
-      role: 'Admin',
-      status: 'Active',
-      lastActive: 'Just now'
-    },
-    {
-      id: 'USR-002',
-      name: 'Sarah Williams',
-      email: 'sarah.w@nexus.com',
-      role: 'Support Agent',
-      status: 'Active',
-      lastActive: '5 mins ago'
-    },
-    {
-      id: 'USR-003',
-      name: 'Mike Johnson',
-      email: 'mike.j@nexus.com',
-      role: 'Technician',
-      status: 'Active',
-      lastActive: '1 hour ago'
-    },
-    {
-      id: 'USR-004',
-      name: 'Jane Smith',
-      email: 'jane.s@nexus.com',
-      role: 'Sales',
-      status: 'Inactive',
-      lastActive: '2 days ago'
-    }
-  ]);
+
+
+  const { users: initialUsers } = usePage().props as unknown as { users: SystemUser[] };
+  const [users, setUsers] = useState<SystemUser[]>(initialUsers);
 
   const [newUser, setNewUser] = useState<Partial<SystemUser>>({
     name: '',
     email: '',
+    password: '',
+    confirmPassword: '',
     role: 'Support Agent',
     status: 'Active'
   });
@@ -82,13 +56,30 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
     }
   };
 
-  const handleAddUser = () => {
-    if (!newUser.name || !newUser.email) return;
+  const handleAddUser = async() => {
+    if (!newUser.name || !newUser.email || !newUser.password) return;
 
+    try{
+        const request = await axios.post('/api/user', {
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password,
+        password_confirmation: newUser.confirmPassword,
+        role: newUser.role,
+        status: newUser.status
+      });
+
+        alert(`User added successfully! ,  ${newUser.name} has been invited.`);
+
+    }catch(error : any){
+        console.error('Error adding user:', error.response);
+        alert('Failed to add user. Please try again.');
+    }
     const user: SystemUser = {
       id: `USR-00${users.length + 1}`,
       name: newUser.name,
       email: newUser.email,
+      password: newUser.password ? newUser.password : '',
       role: newUser.role as UserRole,
       status: 'Active',
       lastActive: 'Never'
@@ -96,7 +87,7 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
 
     setUsers([...users, user]);
     setShowAddModal(false);
-    setNewUser({ name: '', email: '', role: 'Support Agent', status: 'Active' });
+    setNewUser({ name: '', email: '', password: '', role: 'Support Agent', status: 'Active' });
   };
 
   const filteredUsers = users.filter(user =>
@@ -272,6 +263,26 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
                   onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                   className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm"
                   placeholder="user@nexus.com"
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-slate-700 mb-1.5'>Password</label>
+                <input
+                value={newUser.password}
+                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                type="password"
+                className='w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm'
+                placeholder="Enter a secure password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirm Password</label>
+                <input
+                value={newUser.confirmPassword}
+                onChange={(e) => setNewUser({...newUser, confirmPassword : e.target.value})}
+                type="password"
+                className='w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm'
+                placeholder="Re-enter your password"
                 />
               </div>
               <div>

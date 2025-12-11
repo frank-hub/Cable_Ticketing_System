@@ -4,6 +4,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -21,9 +22,7 @@ Route::group(['prefix' => 'customers'], function () {
 });
 
 Route::group(['prefix' => 'settings'], function () {
-    Route::get('users', function () {
-        return Inertia::render('admin_settings/users');
-    })->name('settings.users');
+    Route::get('users', [UserController::class, 'index'])->name('settings.users');
 
     Route::get('system', function () {
         return Inertia::render('admin_settings/system');
@@ -33,6 +32,12 @@ Route::group(['prefix' => 'settings'], function () {
 Route::group(['prefix' => 'support'], function () {
 
     Route::get('tickets',[TicketController::class, 'index'])->name('support.tickets');
+
+    // Route::get('ticket/{id}', function () {
+    //     return Inertia::render('support/ticket_details');
+    // });
+    Route::get('ticket/{ticket_number}',[TicketController::class, 'show']);
+
 
 });
 

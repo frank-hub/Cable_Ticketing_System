@@ -9,7 +9,7 @@ use App\Models\Customer;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\In;
+use App\Models\User;
 use Inertia\Inertia;
 
 class TicketController extends Controller
@@ -67,9 +67,22 @@ class TicketController extends Controller
         $perPage = $request->get('per_page', 15);
         $tickets = $query->paginate($perPage);
 
+        // Fetch customers and users for the form dropdowns
+        $customers = Customer::select('id', 'customer_name', 'account_number', 'primary_phone', 'email_address')
+            ->where('status', 'Active')
+            ->orderBy('customer_name')
+            ->get();
+
+        $users = User::select('id', 'name', 'email')
+            ->where('status', 'active') // Adjust based on your User model
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('support/tickets', [
             'success' => true,
             'data' => $tickets,
+            'customers' => $customers,
+            'users' => $users,
             'stats' => [
                 'total' => Ticket::count(),
                 'open' => Ticket::open()->count(),

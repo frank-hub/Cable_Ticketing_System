@@ -25,12 +25,12 @@ import {
   Briefcase
 } from 'lucide-react';
 import { SupportTicketListProps, NewTicketData, Priority, Category, TicketType, EscalationLevel } from '../types';
-import { url } from 'inspector';
 
 const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTickets, onBack }) => {
 
 
   const {data} = usePage<PageProps>().props;
+  const {customers,users} = usePage().props as any;
   const initialTickets = propTickets || data?.data || [];
   const [tickets, setTickets] = useState(initialTickets);
 
@@ -616,10 +616,11 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         onChange={(e) => setNewTicket({ ...newTicket, assigned_to: e.target.value })}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
                       >
-                        <option value="John Doe">John Doe</option>
-                        <option value="Jane Smith">Jane Smith</option>
-                        <option value="Mike Johnson">Mike Johnson</option>
-                        <option value="Sarah Williams">Sarah Williams</option>
+                        {users.map((user: any) => (
+                          <option key={user.id} value={user.name}>
+                            {user.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>

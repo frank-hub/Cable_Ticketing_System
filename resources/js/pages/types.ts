@@ -96,6 +96,7 @@ export interface Lead {
 }
 
 export interface InstallationsListProps {
+  installations: Installation[];
   onBack: () => void;
 }
 

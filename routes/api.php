@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\InstallationController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 
@@ -16,6 +17,7 @@ Route::post('/user', [UserController::class, 'storeUser']);
 
 Route::group(['prefix' => 'customers'], function () {
     Route::post('/', [CustomerController::class, 'store']);
+    Route::post('/installations', [InstallationController::class, 'store']);
 
 })->middleware('auth:sanctum');
 

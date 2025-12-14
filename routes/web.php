@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\InstallationController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -13,9 +14,7 @@ Route::get('/', function () {
 Route::group(['prefix' => 'customers'], function () {
     Route::get('list',[CustomerController::class, 'index'])->name('customers.list');
 
-    Route::get('installations', function () {
-        return Inertia::render('customers/installations');
-    });
+    Route::get('installations', [InstallationController::class, 'index'])->name('customers.installations');
     Route::get('leads', function () {
         return Inertia::render('customers/leads');
     });

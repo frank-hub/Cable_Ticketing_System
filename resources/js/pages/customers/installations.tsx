@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import {
   Wrench,
   Search,
@@ -17,44 +19,17 @@ import {
 } from 'lucide-react';
 import { InstallationsListProps, Installation, InstallationStatus } from '../types';
 
-const InstallationsList: React.FC<InstallationsListProps> = ({ onBack }) => {
+const InstallationsList: React.FC<InstallationsListProps> = ({ installations: propsInstallations, onBack }) => {
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [installations, setInstallations] = useState<Installation[]>([
-    {
-      id: 'INS-1001',
-      customerName: 'Highland Coffee House',
-      address: '123 Main St, Westlands',
-      contactNumber: '+254 711 222 333',
-      scheduledDate: '2024-11-25 10:00',
-      technician: 'Mike Johnson',
-      equipment: 'Router X500, Fiber ONT',
-      status: 'Scheduled',
-      notes: 'Gate code is 1234'
-    },
-    {
-      id: 'INS-1002',
-      customerName: 'Sarah Kimani',
-      address: '45 Lakeview Estate',
-      contactNumber: '+254 722 444 555',
-      scheduledDate: '2024-11-24 14:00',
-      technician: 'John Doe',
-      equipment: 'Standard Router',
-      status: 'Pending',
-    },
-    {
-      id: 'INS-1003',
-      customerName: 'Tech Solutions Ltd',
-      address: '8th Floor, Plaza Tower',
-      contactNumber: '+254 733 666 777',
-      scheduledDate: '2024-11-23 09:00',
-      technician: 'Sarah Williams',
-      equipment: 'Enterprise Switch, 3x APs',
-      status: 'Completed',
-    }
-  ]);
+  const {technicians , data} = usePage().props as any;
+  
+  const initialTickets = propsInstallations || data?.data || [];
+
+  const [installations, setInstallations] = useState(initialTickets);
 
   const [newInstallation, setNewInstallation] = useState<Omit<Installation, 'id'>>({
     customerName: '',
@@ -87,9 +62,32 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ onBack }) => {
     }
   };
 
-  const handleAddInstallation = () => {
+  const handleAddInstallation = async() => {
     if (!newInstallation.customerName || !newInstallation.address || !newInstallation.scheduledDate) {
       alert('Please fill in required fields');
+      return;
+    }
+
+    try {
+        const request = await axios.post('/api/customers/installations', {
+            customer_name: newInstallation.customerName,
+            address: newInstallation.address,
+            contact_number: newInstallation.contactNumber,
+            scheduled_date: newInstallation.scheduledDate,
+            technician: newInstallation.technician,
+            equipment: newInstallation.equipment,
+            status: newInstallation.status,
+            notes: newInstallation.notes
+        });
+
+        if (request.status == 200) {
+            alert("Installation added successfully.");
+            return;
+        }
+
+    }catch(error :any){
+      console.error("Error adding installation:", error.message);
+      alert("An error occurred while adding the installation. Please try again.");
       return;
     }
 
@@ -312,10 +310,11 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ onBack }) => {
                             onChange={(e) => setNewInstallation({...newInstallation, technician: e.target.value})}
                             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm bg-white"
                          >
-                            <option value="Unassigned">Unassigned</option>
-                            <option value="John Doe">John Doe</option>
-                            <option value="Jane Smith">Jane Smith</option>
-                            <option value="Mike Johnson">Mike Johnson</option>
+                            {technicians.map((tech:any) => (
+                              <option key={tech.id} value={tech.name}>
+                                {tech.name}
+                              </option>
+                            ))}
                          </select>
                     </div>
                     <div>

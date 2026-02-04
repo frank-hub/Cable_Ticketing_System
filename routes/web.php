@@ -11,6 +11,10 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+
+Route::get('sendSms', [TicketController::class, 'sendSms'])->name('sendSms');
+
+
 Route::group(['prefix' => 'customers'], function () {
     Route::get('list',[CustomerController::class, 'index'])->name('customers.list');
 

@@ -11,12 +11,45 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class TicketController extends Controller
 {
     /**
      * Display a listing of tickets
      */
+
+    public function sendSms()
+    {
+        $data = [
+            "count" => 1,
+            "smslist" => [
+                [
+                    "partnerID" => "9276",
+                    "apikey" => "4981083ac1d5fcc5e5339ed37ea3a643",
+                    "pass_type" => "plain",
+                    "clientsmsid" => 1234,
+                    "mobile" => "+254717353774",
+                    "message" => "This is a test message 0",
+                    "shortcode" => "CABLE-ONE",
+                ]
+            ]
+        ];
+
+        Log::info('Sending SMS payload:', $data);
+
+
+        $response = Http::post('https://quicksms.advantasms.com/api/services/sendbulk/', $data);
+
+        if ($response->successful()) {
+            return response()->json(['status' => 'SMS sent successfully']);
+        } else {
+            return response()->json(['status' => 'Failed to send SMS', 'error' => $response->body()]);
+        }
+    }
+
+
     public function index(Request $request)
     {
         $query = Ticket::with(['customer', 'assignedUser', 'notes']);

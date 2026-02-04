@@ -42,6 +42,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
   const [showCreateTicket, setShowCreateTicket] = useState(false);
 
   const [newTicket, setNewTicket] = useState<NewTicketData>({
+    customer_id: null,
     customer_name: '',
     account_number: '',
     phone: '',
@@ -138,6 +139,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
     // Reset form
     setNewTicket({
+        customer_id: null,
       customer_name: '',
       account_number: '',
       phone: '',
@@ -368,7 +370,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex flex-col">
-                          <p className="text-sm font-medium text-slate-900">{ticket.customer}</p>
+                          <p className="text-sm font-medium text-slate-900">{ticket.customer_name}</p>
                           <p className="text-xs text-slate-500 font-mono">{ticket.account_number}</p>
                         </div>
                       </td>
@@ -466,62 +468,97 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
             <div className="p-6 space-y-8">
               {/* Customer Information Section */}
-              <section>
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <User className="w-4 h-4 text-indigo-600" />
-                  Customer Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Customer Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newTicket.customer_name}
-                      onChange={(e) => setNewTicket({ ...newTicket, customer_name: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      placeholder="e.g. Acme Corp"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Account Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newTicket.account_number}
-                      onChange={(e) => setNewTicket({ ...newTicket, account_number: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      placeholder="ACC-000"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Phone Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      value={newTicket.phone}
-                      onChange={(e) => setNewTicket({ ...newTicket, phone: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      placeholder="+1 (555) 000-0000"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={newTicket.email}
-                      onChange={(e) => setNewTicket({ ...newTicket, email: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      placeholder="contact@company.com"
-                    />
-                  </div>
+            <section>
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2 pb-2 border-b border-slate-100">
+                <User className="w-4 h-4 text-indigo-600" />
+                Customer Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Customer Selection Dropdown */}
+                <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Select Customer <span className="text-red-500">*</span>
+                </label>
+                <select
+                    value={newTicket.customer_id || ''}
+                    onChange={(e) => {
+                        const selectedCustomer = customers.find((c: any) => c.id === parseInt(e.target.value));
+                        if (selectedCustomer) {
+                        setNewTicket({
+                            ...newTicket,
+                            customer_id: selectedCustomer.id,
+                            customer_name: selectedCustomer.customer_name,
+                            account_number: selectedCustomer.account_number,
+                            phone: selectedCustomer.primary_phone,
+                            email: selectedCustomer.email_address || ''
+                        });
+                        }
+                    }}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                    >
+                    <option value="">-- Select a customer --</option>
+                    {customers?.map((customer: any) => (
+                        <option key={customer.id} value={customer.id}>
+                        {customer.customer_name} - {customer.account_number}
+                        </option>
+                    ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                    Select an existing customer to auto-fill their information
+                </p>
                 </div>
-              </section>
+
+                {/* Auto-filled Customer Details (Read-only) */}
+                <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Customer Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    value={newTicket.customer_name}
+                    readOnly
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                    placeholder="Auto-filled from selection"
+                />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Account Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    value={newTicket.account_number}
+                    readOnly
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                    placeholder="Auto-filled from selection"
+                />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                    type="tel"
+                    value={newTicket.phone}
+                    readOnly
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                    placeholder="Auto-filled from selection"
+                />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Email Address
+                </label>
+                <input
+                    type="email"
+                    value={newTicket.email}
+                    readOnly
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                    placeholder="Auto-filled from selection"
+                />
+                </div>
+            </div>
+            </section>
 
               {/* Ticket Details Section */}
               <section>

@@ -22,7 +22,7 @@ export interface Customer {
 export interface Ticket {
   ticket_number: string;
   subject: string;
-  customer: string;
+  customer_name: string;
   account_number: string;
   phone?: string;
   email?: string;
@@ -38,6 +38,7 @@ export interface Ticket {
 }
 
 export interface NewTicketData {
+    customer_id: number | null;
   customer_name: string;
   account_number: string;
   phone: string;
@@ -49,6 +50,13 @@ export interface NewTicketData {
   priority: Priority;
   description: string;
   assigned_to: string;
+
+  first_response_at?: string;
+  resolved_at?: string;
+  closed_at?: string;
+  response_time_minutes?: number;
+  resolution_time_minutes?: number;
+  resolution_summary?: string;
 }
 
 export interface SupportTicketListProps {

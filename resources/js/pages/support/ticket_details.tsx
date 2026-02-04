@@ -54,6 +54,11 @@ interface TicketDetails {
   closed_at: string | null;
   response_time_minutes: number | null;
   resolution_time_minutes: number | null;
+
+  started_at: string | null;  // When technician clicked "Start Working"
+  paused_at: string | null;   // When ticket was put "On Hold"
+  total_paused_minutes: number;
+
   resolution_summary: string | null;
   satisfaction_rating: number | null;
   created_at: string;
@@ -62,7 +67,12 @@ interface TicketDetails {
 }
 
 const TicketDetailsPage = () => {
-  const [ticket, setTicket] = useState<TicketDetails>(usePage().props.data  as TicketDetails);
+  const [ticket, setTicket] = useState<TicketDetails>({
+  ...usePage().props.data as TicketDetails,
+  started_at: null,
+  paused_at: null,
+  total_paused_minutes: 0
+});
 
   const [isEditing, setIsEditing] = useState(false);
   const [newNote, setNewNote] = useState('');
@@ -165,24 +175,49 @@ const TicketDetailsPage = () => {
     setEscalationReason('');
   };
 
-  const handleResolve = async () => {
-    if (!resolutionSummary.trim()) {
-      alert('Please provide a resolution summary');
-      return;
-    }
+    const handleResolve = async () => {
+        if (!resolutionSummary.trim()) {
+            alert('Please provide a resolution summary');
+            return;
+        }
 
-    setTicket({
-      ...ticket,
-      status: 'Resolved',
-      resolved_at: new Date().toISOString(),
-      resolution_summary: resolutionSummary,
-      resolution_time_minutes: Math.floor((new Date().getTime() - new Date(ticket.created_at).getTime()) / 60000),
-      updated_at: new Date().toISOString()
-    });
+        const resolveTime = new Date().toISOString();
+        
+        // Calculate resolution time (from start_working to resolved, excluding paused time)
+        let resolutionMinutes = 0;
+        if (ticket.started_at) {
+            const totalMinutes = Math.floor(
+            (new Date(resolveTime).getTime() - new Date(ticket.started_at).getTime()) / 60000
+            );
+            // Subtract paused time
+            resolutionMinutes = totalMinutes - ticket.total_paused_minutes;
+        }
 
-    setShowResolveModal(false);
-    setResolutionSummary('');
-  };
+        setTicket({
+            ...ticket,
+            status: 'Resolved',
+            resolved_at: resolveTime,
+            resolution_summary: resolutionSummary,
+            resolution_time_minutes: resolutionMinutes,
+            updated_at: resolveTime
+        });
+
+        const resolveNote: TicketNote = {
+            id: ticket.notes.length + 1,
+            note: `Ticket resolved. Total active work time: ${formatDuration(resolutionMinutes)}`,
+            author_name: 'System',
+            is_internal: true,
+            created_at: resolveTime
+        };
+
+        setTicket(prev => ({
+            ...prev,
+            notes: [...prev.notes, resolveNote]
+        }));
+
+        setShowResolveModal(false);
+        setResolutionSummary('');
+    };
 
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return 'N/A';
@@ -190,6 +225,178 @@ const TicketDetailsPage = () => {
     const mins = minutes % 60;
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
+// ..................................................SLA Metrics.........................
+    const SLA_TARGETS: Record<string, { responseMinutes: number; resolutionMinutes: number }> = {
+        Critical: {
+            responseMinutes: 60,      // 1 hour
+            resolutionMinutes: 240    // 4 hours
+        },
+        High: {
+            responseMinutes: 240,     // 4 hours
+            resolutionMinutes: 1440   // 24 hours
+        },
+        Medium: {
+            responseMinutes: 480,     // 8 hours
+            resolutionMinutes: 4320   // 3 days
+        },
+        Low: {
+            responseMinutes: 1440,    // 24 hours
+            resolutionMinutes: 10080  // 7 days
+        }
+    };
+
+
+    const handleStartWorking = async () => {
+  const startTime = new Date().toISOString();
+  
+  // Calculate response time (time from creation to starting work)
+    const responseMinutes = Math.floor(
+            (new Date(startTime).getTime() - new Date(ticket.created_at).getTime()) / 60000
+        );
+
+        setTicket({
+            ...ticket,
+            status: 'In Progress',
+            started_at: startTime,
+            first_response_at: startTime,
+            response_time_minutes: responseMinutes,
+            updated_at: startTime
+        });
+
+        // Add system note
+        const startNote: TicketNote = {
+            id: ticket.notes.length + 1,
+            note: `Technician started working on ticket. Response time: ${formatDuration(responseMinutes)}`,
+            author_name: 'System',
+            is_internal: true,
+            created_at: startTime
+        };
+
+        setTicket(prev => ({
+            ...prev,
+            notes: [...prev.notes, startNote]
+        }));
+    };
+
+    const handlePutOnHold = async () => {
+        const holdTime = new Date().toISOString();
+
+        setTicket({
+            ...ticket,
+            status: 'On Hold',
+            paused_at: holdTime,
+            updated_at: holdTime
+        });
+
+        const holdNote: TicketNote = {
+            id: ticket.notes.length + 1,
+            note: 'Ticket put on hold. SLA timer paused.',
+            author_name: 'System',
+            is_internal: true,
+            created_at: holdTime
+        };
+
+        setTicket(prev => ({
+            ...prev,
+            notes: [...prev.notes, holdNote]
+        }));
+    };
+
+    const handleResumeFromHold = async () => {
+        const resumeTime = new Date().toISOString();
+        
+        // Calculate how long it was paused
+        const pausedMinutes = Math.floor(
+            (new Date(resumeTime).getTime() - new Date(ticket.paused_at!).getTime()) / 60000
+        );
+
+        setTicket({
+            ...ticket,
+            status: 'In Progress',
+            paused_at: null,
+            total_paused_minutes: ticket.total_paused_minutes + pausedMinutes,
+            updated_at: resumeTime
+        });
+
+        const resumeNote: TicketNote = {
+            id: ticket.notes.length + 1,
+            note: `Ticket resumed. Was on hold for ${formatDuration(pausedMinutes)}. SLA timer resumed.`,
+            author_name: 'System',
+            is_internal: true,
+            created_at: resumeTime
+        };
+
+        setTicket(prev => ({
+            ...prev,
+            notes: [...prev.notes, resumeNote]
+        }));
+    };
+
+    const calculateSLAStatus = (
+response_time_minutes: number | null, responseMinutes: number, p0: boolean, type: 'response' | 'resolution', priority: string        ) => {
+        const target = type === 'response' 
+            ? SLA_TARGETS[priority].responseMinutes 
+            : SLA_TARGETS[priority].resolutionMinutes;
+
+        let elapsed = 0;
+        let isCompleted = false;
+
+        if (type === 'response') {
+            // Response SLA: Time from created to started_at
+            if (ticket.started_at) {
+            elapsed = ticket.response_time_minutes || 0;
+            isCompleted = true;
+            } else {
+            // Still waiting to start
+            elapsed = Math.floor(
+                (new Date().getTime() - new Date(ticket.created_at).getTime()) / 60000
+            );
+            }
+        } else {
+            // Resolution SLA: Time from started_at to resolved_at (excluding paused time)
+            if (ticket.status === 'Resolved' || ticket.status === 'Closed') {
+            elapsed = ticket.resolution_time_minutes || 0;
+            isCompleted = true;
+            } else if (ticket.started_at) {
+            // Currently in progress
+            const totalMinutes = Math.floor(
+                (new Date().getTime() - new Date(ticket.started_at).getTime()) / 60000
+            );
+            
+            // If currently paused, add time since pause started
+            let currentPausedMinutes = ticket.total_paused_minutes;
+            if (ticket.status === 'On Hold' && ticket.paused_at) {
+                currentPausedMinutes += Math.floor(
+                (new Date().getTime() - new Date(ticket.paused_at).getTime()) / 60000
+                );
+            }
+            
+            elapsed = totalMinutes - currentPausedMinutes;
+            } else {
+            // Not started yet
+            return { status: 'not-started', color: 'gray', percentage: 0 };
+            }
+        }
+
+        // Determine status
+        if (isCompleted) {
+            if (elapsed <= target) {
+            return { status: 'met', color: 'green', percentage: (elapsed / target) * 100 };
+            } else {
+            return { status: 'breached', color: 'red', percentage: 100 };
+            }
+        }
+
+        // In progress
+        const percentage = (elapsed / target) * 100;
+        if (elapsed > target) {
+            return { status: 'breached', color: 'red', percentage: 100 };
+        } else if (percentage > 80) {
+            return { status: 'at-risk', color: 'orange', percentage };
+        } else {
+            return { status: 'on-track', color: 'green', percentage };
+        }
+    };
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -464,95 +671,277 @@ const TicketDetailsPage = () => {
           <div className="space-y-6">
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-              <div className="space-y-2">
-                {ticket.status !== 'Resolved' && ticket.status !== 'Closed' && (
-                  <button
-                    onClick={() => setShowResolveModal(true)}
-                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Mark as Resolved
-                  </button>
-                )}
-
-                {ticket.status === 'Resolved' && (
-                  <button
-                    onClick={() => handleUpdateStatus('Closed')}
-                    className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <X className="w-4 h-4" />
-                    Close Ticket
-                  </button>
-                )}
-
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
+            <div className="space-y-2">
+                {/* Start Working - Only show if not started yet */}
+                {!ticket.started_at && ticket.status === 'Open' && (
                 <button
-                  onClick={() => setShowEscalateModal(true)}
-                  className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                    onClick={handleStartWorking}
+                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
                 >
-                  <Flag className="w-4 h-4" />
-                  Escalate
-                </button>
-
-                {ticket.status !== 'In Progress' && ticket.status !== 'Resolved' && ticket.status !== 'Closed' && (
-                  <button
-                    onClick={() => handleUpdateStatus('In Progress')}
-                    className="w-full px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
-                  >
                     <Clock className="w-4 h-4" />
                     Start Working
-                  </button>
+                </button>
                 )}
 
+                {/* Resume from Hold */}
+                {ticket.status === 'On Hold' && (
+                <button
+                    onClick={handleResumeFromHold}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                    <Clock className="w-4 h-4" />
+                    Resume Work
+                </button>
+                )}
+
+                {/* Put On Hold - Only show if in progress */}
                 {ticket.status === 'In Progress' && (
-                  <button
-                    onClick={() => handleUpdateStatus('On Hold')}
+                <button
+                    onClick={handlePutOnHold}
                     className="w-full px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
-                  >
+                >
                     <AlertCircle className="w-4 h-4" />
                     Put On Hold
-                  </button>
+                </button>
                 )}
-              </div>
+
+                {/* Mark as Resolved */}
+                {ticket.started_at && ticket.status !== 'Resolved' && ticket.status !== 'Closed' && (
+                <button
+                    onClick={() => setShowResolveModal(true)}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                >
+                    <CheckCircle className="w-4 h-4" />
+                    Mark as Resolved
+                </button>
+                )}
+
+                {/* Close Ticket */}
+                {ticket.status === 'Resolved' && (
+                <button
+                    onClick={() => handleUpdateStatus('Closed')}
+                    className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
+                >
+                    <XCircle className="w-4 h-4" />
+                    Close Ticket
+                </button>
+                )}
+
+                {/* Escalate */}
+                <button
+                onClick={() => setShowEscalateModal(true)}
+                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                >
+                <Flag className="w-4 h-4" />
+                Escalate
+                </button>
+            </div>
             </div>
 
             {/* SLA Metrics */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-indigo-600" />
-                SLA Metrics
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Response Time</label>
-                  <p className="text-lg font-bold text-slate-900 mt-1">{formatDuration(ticket.response_time_minutes)}</p>
-                  {ticket.first_response_at && (
-                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      First response: {new Date(ticket.first_response_at).toLocaleString()}
-                    </p>
-                  )}
-                </div>
+            {/* SLA Metrics */}
+<div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+    <TrendingUp className="w-5 h-5 text-indigo-600" />
+    SLA Metrics
+  </h3>
+  <div className="space-y-4">
+    {/* Response Time SLA (Time to Start Working) */}
+    <div>
+        <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            Time to Start Working
+            </label>
+            {(() => {
+            const sla = calculateSLAStatus(
+              ticket.response_time_minutes ?? null,
+              ticket.response_time_minutes ?? 0,
+              false,
+              'response',
+              ticket.priority
+            );
+            return (
+                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                sla.status === 'met' || sla.status === 'on-track' 
+                    ? 'bg-green-100 text-green-700'
+                    : sla.status === 'at-risk'
+                    ? 'bg-orange-100 text-orange-700'
+                    : sla.status === 'not-started'
+                    ? 'bg-gray-100 text-gray-700'
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                {sla.status === 'met' ? 'MET' : 
+                sla.status === 'on-track' ? 'ON TRACK' :
+                sla.status === 'at-risk' ? 'AT RISK' :
+                sla.status === 'not-started' ? 'WAITING' : 'BREACHED'}
+                </span>
+            );
+            })()}
+        </div>
+        
+        <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+            <span className="font-bold text-slate-900">
+                {ticket.started_at 
+                ? formatDuration(ticket.response_time_minutes)
+                : formatDuration(Math.floor((new Date().getTime() - new Date(ticket.created_at).getTime()) / 60000))
+                }
+            </span>
+            <span className="text-slate-500">
+                Target: {formatDuration(SLA_TARGETS[ticket.priority].responseMinutes)}
+            </span>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            {(() => {
+                const sla = calculateSLAStatus(
+                  ticket.response_time_minutes ?? null,
+                  ticket.response_time_minutes ?? 0,
+                  false,
+                  'response',
+                  ticket.priority
+                );
+                return (
+                <div 
+                    className={`h-full transition-all ${
+                    sla.status === 'met' || sla.status === 'on-track'
+                        ? 'bg-green-500'
+                        : sla.status === 'at-risk'
+                        ? 'bg-orange-500'
+                        : sla.status === 'not-started'
+                        ? 'bg-gray-400'
+                        : 'bg-red-500'
+                    }`}
+                    style={{ width: `${Math.min(sla.percentage, 100)}%` }}
+                />
+                );
+            })()}
+            </div>
+        </div>
+        
+        {ticket.started_at && (
+            <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" />
+            Started working: {new Date(ticket.started_at).toLocaleString()}
+            </p>
+        )}
+        </div>
 
-                {ticket.resolution_time_minutes && (
-                  <div>
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Resolution Time</label>
-                    <p className="text-lg font-bold text-slate-900 mt-1">{formatDuration(ticket.resolution_time_minutes)}</p>
-                  </div>
-                )}
-
-                <div className="pt-4 border-t border-slate-100">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</label>
-                  <p className="text-sm text-slate-700 mt-1">{new Date(ticket.created_at).toLocaleString()}</p>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Updated</label>
-                  <p className="text-sm text-slate-700 mt-1">{new Date(ticket.updated_at).toLocaleString()}</p>
-                </div>
-              </div>
+        {/* Resolution Time SLA (Active Work Time) */}
+        {ticket.started_at && (
+        <div className="pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Active Work Time
+            </label>
+            {(() => {
+                const sla = calculateSLAStatus(
+                  ticket.resolution_time_minutes ?? null,
+                  ticket.resolution_time_minutes ?? 0,
+                  false,
+                  'resolution',
+                  ticket.priority
+                );
+                return (
+                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                    sla.status === 'met' || sla.status === 'on-track'
+                    ? 'bg-green-100 text-green-700'
+                    : sla.status === 'at-risk'
+                    ? 'bg-orange-100 text-orange-700'
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                    {sla.status === 'met' ? 'MET' :
+                    sla.status === 'on-track' ? 'ON TRACK' :
+                    sla.status === 'at-risk' ? 'AT RISK' : 'BREACHED'}
+                </span>
+                );
+            })()}
+            </div>
+            
+            <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+                <span className="font-bold text-slate-900">
+                {ticket.resolution_time_minutes 
+                    ? formatDuration(ticket.resolution_time_minutes)
+                    : formatDuration(
+                        Math.floor((new Date().getTime() - new Date(ticket.started_at).getTime()) / 60000) 
+                        - ticket.total_paused_minutes
+                        - (ticket.status === 'On Hold' && ticket.paused_at 
+                        ? Math.floor((new Date().getTime() - new Date(ticket.paused_at).getTime()) / 60000)
+                        : 0)
+                    )}
+                </span>
+                <span className="text-slate-500">
+                Target: {formatDuration(SLA_TARGETS[ticket.priority].resolutionMinutes)}
+                </span>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                {(() => {
+                const sla = calculateSLAStatus(
+                  ticket.resolution_time_minutes ?? null,
+                  ticket.resolution_time_minutes ?? 0,
+                  false,
+                  'resolution',
+                  ticket.priority
+                );
+                return (
+                    <div 
+                    className={`h-full transition-all ${
+                        sla.status === 'met' || sla.status === 'on-track'
+                        ? 'bg-green-500'
+                        : sla.status === 'at-risk'
+                        ? 'bg-orange-500'
+                        : 'bg-red-500'
+                    }`}
+                    style={{ width: `${Math.min(sla.percentage, 100)}%` }}
+                    />
+                );
+                })()}
+            </div>
             </div>
 
+            {/* Show paused time if any */}
+            {ticket.total_paused_minutes > 0 && (
+            <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Paused time (excluded): {formatDuration(ticket.total_paused_minutes)}
+            </p>
+            )}
+
+            {ticket.status === 'On Hold' && (
+            <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                <Clock className="w-3 h-3 animate-pulse" />
+                Currently on hold - SLA timer paused
+            </p>
+            )}
+        </div>
+        )}
+
+        {/* Timestamps */}
+        <div className="pt-4 border-t border-slate-100 space-y-3">
+        <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</label>
+            <p className="text-sm text-slate-700 mt-1">{new Date(ticket.created_at).toLocaleString()}</p>
+        </div>
+
+        {ticket.started_at && (
+            <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Work Started</label>
+            <p className="text-sm text-slate-700 mt-1">{new Date(ticket.started_at).toLocaleString()}</p>
+            </div>
+        )}
+
+        <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Updated</label>
+            <p className="text-sm text-slate-700 mt-1">{new Date(ticket.updated_at).toLocaleString()}</p>
+        </div>
+        </div>
+    </div>
+    </div>
             {/* Customer Satisfaction */}
             {ticket.satisfaction_rating && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">

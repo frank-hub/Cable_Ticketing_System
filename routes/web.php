@@ -3,9 +3,11 @@
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InstallationController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -45,10 +47,16 @@ Route::group(['prefix' => 'support'], function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard',             [DashboardController::class, 'index']);
+    Route::get('/dashboard/sla',         [DashboardController::class, 'sla']);
+    Route::get('/dashboard/performance', [DashboardController::class, 'performance']);
+    Route::get('/dashboard/insights',    [DashboardController::class, 'insights']);
+
+    // JSON endpoint for live refresh
+    Route::get('/api/dashboard',         [DashboardController::class, 'data']);
 });
+
+
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

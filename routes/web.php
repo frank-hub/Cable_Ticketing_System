@@ -47,7 +47,7 @@ Route::group(['prefix' => 'support'], function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard',             [DashboardController::class, 'index']);
+    Route::get('/dashboard',             [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/sla',         [DashboardController::class, 'sla']);
     Route::get('/dashboard/performance', [DashboardController::class, 'performance']);
     Route::get('/dashboard/insights',    [DashboardController::class, 'insights']);

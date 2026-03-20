@@ -118,14 +118,6 @@ const menuItems = [
     ],
   },
   {
-    id: 'network', label: 'Network', icon: Wifi, path: '/network',
-    subItems: [
-      { id: 'routers',    label: 'Routers',    path: '/network/routers' },
-      { id: 'services',   label: 'Services',   path: '/network/services' },
-      { id: 'monitoring', label: 'Monitoring', path: '/network/monitoring' },
-    ],
-  },
-  {
     id: 'analytics', label: 'Analytics & Reports', icon: BarChart3, path: '/analytics',
     subItems: [
       { id: 'sla-reports',       label: 'SLA Reports',       path: '/dashboard/sla' },

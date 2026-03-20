@@ -21,7 +21,7 @@ export default function WelcomePage() {
               <Ticket className="text-white" size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">NetBill Pro</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Cable</h2>
               <p className="text-sm text-gray-600">Ticketing System</p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function WelcomePage() {
 
               <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-100">
                 <p className="text-sm text-gray-700 font-medium mb-2">🎯 Start improving your support today</p>
-                <p className="text-xs text-gray-600">Join hundreds of companies using NetBill Pro for their customer support management.</p>
+                <p className="text-xs text-gray-600">Join hundreds of companies using CablePro for their customer support management.</p>
               </div>
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function WelcomePage() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-gray-500 text-sm">
-          <p>© 2024 NetBill Pro. All rights reserved. | Privacy Policy | Terms of Service</p>
+          <p>© 2024 CablePro. All rights reserved. | Privacy Policy | Terms of Service</p>
         </div>
       </div>
     </div>

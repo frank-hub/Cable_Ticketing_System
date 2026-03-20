@@ -34,6 +34,14 @@ Route::group(['prefix' => 'settings'], function () {
     });
 });
 
+// Ticket updates and details
+Route::get('tickets/{ticket}/start',   [TicketController::class, 'startWorking']);
+Route::post('tickets/{ticket}/hold',    [TicketController::class, 'putOnHold']);
+Route::post('tickets/{ticket}/resume',  [TicketController::class, 'resumeFromHold']);
+Route::post('tickets/{ticket}/resolve', [TicketController::class, 'resolve']);
+Route::post('tickets/{ticket}/close',   [TicketController::class, 'close']);
+
+
 Route::group(['prefix' => 'support'], function () {
 
     Route::get('tickets',[TicketController::class, 'index'])->name('support.tickets');

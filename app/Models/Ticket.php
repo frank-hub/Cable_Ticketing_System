@@ -29,6 +29,7 @@ class Ticket extends Model
         'assigned_to',
         'assigned_user_id',
         'status',
+        'started_at',
         'first_response_at',
         'resolved_at',
         'closed_at',
@@ -40,6 +41,7 @@ class Ticket extends Model
     ];
 
     protected $casts = [
+        'started_at' => 'datetime',
         'first_response_at' => 'datetime',
         'resolved_at' => 'datetime',
         'closed_at' => 'datetime',

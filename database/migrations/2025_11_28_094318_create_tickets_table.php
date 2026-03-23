@@ -70,6 +70,7 @@ return new class extends Migration
             ])->default('Open');
 
             // SLA Tracking
+            $table->timestamp('started_at')->nullable();
             $table->timestamp('first_response_at')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamp('closed_at')->nullable();

@@ -109,7 +109,7 @@ const TicketDetailsPage = () => {
   /** "Resume Work" button */
   const handleResumeFromHold = () => {
     setProcessing(true);
-    router.post(ticketUrl('/resume'), {}, {
+    router.post(`/tickets/${ticket.id}/resume`, {}, {
       preserveScroll: true,
       onFinish: () => setProcessing(false),
     });

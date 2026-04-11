@@ -13,40 +13,46 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Illuminate\Support\Env;
 
 class TicketController extends Controller
 {
     // =========================================================================
-    // EXISTING METHODS (unchanged)
+    // SMS METHODS
     // =========================================================================
-
-    public function sendSms()
+    public function sendSms($number , $message)
     {
         $data = [
-            "count" => 1,
-            "smslist" => [
-                [
-                    "partnerID"    => "9276",
-                    "apikey"       => "4981083ac1d5fcc5e5339ed37ea3a643",
-                    "pass_type"    => "plain",
-                    "clientsmsid" => 1234,
-                    "mobile"       => "+254717353774",
-                    "message"      => "This is a test message 0",
-                    "shortcode"    => "CABLE-ONE",
-                ]
-            ]
+            "api_key"   => env('SMS_API_KEY'),
+            "sender_id" => env('SMS_SENDER_ID'),
+            "message"   => $message,
+            "phone"     => $number
         ];
 
-        Log::info('Sending SMS payload:', $data);
-
-        $response = Http::post('https://quicksms.advantasms.com/api/services/sendbulk/', $data);
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post('https://sms.blessedtexts.com/api/sms/v1/sendsms', $data);
 
         if ($response->successful()) {
-            return response()->json(['status' => 'SMS sent successfully']);
+            return response()->json([
+                'status' => 'SMS sent successfully',
+                'response' => $response->json()
+            ]);
         } else {
-            return response()->json(['status' => 'Failed to send SMS', 'error' => $response->body()]);
+            return response()->json([
+                'status' => 'Failed to send SMS',
+                'error' => $response->body()
+            ]);
+
+            Log::info('SMS Error '.$response->body());
+
         }
+
+                    Log::info('SMS Error '.$response->body());
+
     }
+
 
     public function index(Request $request)
     {
@@ -175,6 +181,7 @@ class TicketController extends Controller
             }
 
             DB::commit();
+            $this->sendSms($ticket->phone, "Your ticket {$ticket->ticket_number} has been created. We will get back to you shortly.");
 
             return Inertia::render('support/tickets', [
                 'success' => true,
@@ -567,6 +574,8 @@ class TicketController extends Controller
                 true,
                 Auth::id()
             );
+
+            $this->sendSms($ticket->phone, "Your ticket {$ticket->ticket_number} has been resolved. Thank you for choosing us.");
 
             return response()->json([
                 'success' => true,

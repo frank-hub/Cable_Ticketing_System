@@ -33,7 +33,7 @@ const CustomerListTable: React.FC<CustomerListTableProps> = ({ customers : propC
   const [newCustomer, setNewCustomer] = useState({
     customer_name: '',
     account_number: '',
-    primary_phone: '',
+    primary_phone: '254',
     email_address: '',
     service_package: 'Standard 50Mbps',
     status: 'Active',

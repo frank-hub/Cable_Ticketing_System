@@ -81,7 +81,7 @@ const TicketDetailsPage = () => {
   };
 
   const ticketUrl = (suffix = '') =>
-    `/tickets/${ticket.ticket_number}${suffix}`;
+    `/tickets/${ticket.id}${suffix}`;
 
   const reloadTicket = () =>
     router.reload({ only: ['data'] });
@@ -91,7 +91,7 @@ const TicketDetailsPage = () => {
   /** "Start Working" button */
   const handleStartWorking = () => {
     setProcessing(true);
-    router.get(`/tickets/${ticket.id}/start`, {}, {
+    router.get(ticketUrl('/start'), {}, {
       preserveScroll: true,
       onFinish: () => setProcessing(false),
     });
@@ -100,7 +100,7 @@ const TicketDetailsPage = () => {
   /** "Put On Hold" button */
   const handlePutOnHold = () => {
     setProcessing(true);
-    router.post(`/tickets/${ticket.id}/hold`, {}, {
+    router.post(ticketUrl('/hold'), {}, {
       preserveScroll: true,
       onFinish: () => setProcessing(false),
     });

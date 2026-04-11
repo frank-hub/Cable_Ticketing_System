@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import {
   LayoutDashboard, Users, Ticket, MessageSquare, Wifi, BarChart3,
   Settings, Bell, Search, ChevronDown, ChevronRight, AlertCircle,
   Clock, CheckCircle, TrendingUp, Activity, Hexagon, ArrowUpRight,
   ArrowDownRight, ArrowRight, ShieldAlert, UserCheck, RefreshCw,
+  User,
+  XCircle,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from 'recharts';
+import {Category, EscalationLevel, NewTicketData, Priority, TicketType} from './types';
 
 // ── Types (matching DashboardController output) ──────────────────────────────
 
@@ -206,149 +210,82 @@ function Sidebar() {
   );
 }
 
-// ── Create Ticket Modal ───────────────────────────────────────────────────────
-
-function CreateTicketModal({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({
-    customer_name: '', account_number: '', phone: '', email: '',
-    subject: '', ticket_type: 'Technical Issue', escalation_level: 'Level 1',
-    priority: 'Medium', category: 'Connectivity', description: '',
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
-
-  const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
-
-  const submit = () => {
-    setSubmitting(true);
-    router.post('/support/tickets', form, {
-      onError: (e) => { setErrors(e); setSubmitting(false); },
-      onSuccess: () => onClose(),
-    });
-  };
-
-  const field = (label: string, key: string, type = 'text', required = false) => (
-    <div>
-      <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        type={type}
-        value={(form as any)[key]}
-        onChange={e => set(key, e.target.value)}
-        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500
-          ${errors[key] ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
-      />
-      {errors[key] && <p className="text-red-500 text-xs mt-1">{errors[key]}</p>}
-    </div>
-  );
-
-  const select = (label: string, key: string, options: string[], required = false) => (
-    <div>
-      <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <select
-        value={(form as any)[key]}
-        onChange={e => set(key, e.target.value)}
-        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      >
-        {options.map(o => <option key={o}>{o}</option>)}
-      </select>
-    </div>
-  );
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-5 border-b border-slate-100 flex items-center justify-between rounded-t-2xl">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">New Support Ticket</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Fill in all required fields to open a ticket</p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Customer info */}
-          <div>
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs flex items-center justify-center font-bold">1</span>
-              Customer Information
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              {field('Customer Name',   'customer_name',   'text', true)}
-              {field('Account Number',  'account_number')}
-              {field('Phone Number',    'phone',           'tel',  true)}
-              {field('Email Address',   'email',           'email')}
-            </div>
-          </div>
-
-          {/* Ticket details */}
-          <div className="border-t border-slate-100 pt-6">
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs flex items-center justify-center font-bold">2</span>
-              Ticket Details
-            </h3>
-            <div className="space-y-4">
-              {field('Subject', 'subject', 'text', true)}
-              <div className="grid grid-cols-3 gap-4">
-                {select('Ticket Type', 'ticket_type', ['Technical Issue', 'Support Request', 'Service Request', 'Escalation', 'General Inquiry'], true)}
-                {select('Priority',    'priority',    ['Low', 'Medium', 'High', 'Critical'], true)}
-                {select('Escalation',  'escalation_level', ['Level 1', 'Level 2', 'Level 3'], true)}
-              </div>
-              {select('Category', 'category', ['Connectivity', 'Performance', 'Billing', 'Equipment', 'Service Request', 'Installation', 'Technical'], true)}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  rows={4}
-                  value={form.description}
-                  onChange={e => set('description', e.target.value)}
-                  className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none
-                    ${errors.description ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
-                  placeholder="Describe the issue in detail..."
-                />
-                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="sticky bottom-0 bg-slate-50 px-6 py-4 border-t border-slate-100 rounded-b-2xl flex gap-3 justify-end">
-          <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-white transition-colors">
-            Cancel
-          </button>
-          <button
-            onClick={submit}
-            disabled={submitting}
-            className="px-5 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 disabled:opacity-60"
-          >
-            {submitting ? <RefreshCw size={15} className="animate-spin" /> : <Ticket size={15} />}
-            {submitting ? 'Creating…' : 'Create Ticket'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 
-export default function Dashboard() {
+const Dashboard: React.FC<{ tickets: any[] }> = ({ tickets: propTickets }) => {
   const {
     kpis, chart_data, recent_tickets, by_priority,
     by_status, by_category, agent_performance, sla_breaches,
   } = usePage<PageProps>().props;
 
   const [search, setSearch]               = useState('');
-  const [showCreateTicket, setShowCreate] = useState(false);
+
+  const {customers,users} = usePage().props as any;
+
+  const initialTickets = propTickets || [];
+
+  const [tickets, setTickets] = useState(initialTickets);
+  const [showCreateTicket, setShowCreateTicket] = useState(false);
+
+    const [newTicket, setNewTicket] = useState<NewTicketData>({
+      customer_id: null,
+      customer_name: '',
+      account_number: '',
+      phone: '',
+      email: '',
+      subject: '',
+      category: 'Connectivity',
+      ticket_type: 'Support Request',
+      escalation_level: 'Level 1',
+      priority: 'Medium',
+      description: '',
+      assigned_to: 'John Doe'
+    });
+
+    const handleCreateTicket = async() => {
+      if (!newTicket.customer_name || !newTicket.account_number || !newTicket.phone || !newTicket.subject || !newTicket.description) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      try {
+          const response = await axios.post('/api/support/ticket', newTicket);
+
+          alert(`Ticket ${response.data.ticketId} created successfully`);
+      }catch(error: any) {
+          console.error('Error creating ticket',error.response);
+          alert(`Failed to create ticket: ${error.response?.data?.message || 'Unknown error'}`);
+      }
+
+      const createdTicket = {
+        ...newTicket,
+        ticket_number: `TK-${2400 + tickets.length + 1}`,
+        status: 'Open',
+        createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        lastUpdate: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        customer: newTicket.customer_name,
+      };
+      setTickets([createdTicket, ...tickets]);
+
+      setShowCreateTicket(false);
+
+      // Reset form
+      setNewTicket({
+          customer_id: null,
+        customer_name: '',
+        account_number: '',
+        phone: '',
+        email: '',
+        subject: '',
+        category: 'Connectivity',
+        ticket_type: 'Support Request',
+        escalation_level: 'Level 1',
+        priority: 'Medium',
+        description: '',
+        assigned_to: 'John Doe'
+      });
+    };
+
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && search.trim()) {
@@ -389,7 +326,7 @@ export default function Dashboard() {
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
               </button>
               <button
-                onClick={() => setShowCreate(true)}
+                onClick={() => setShowCreateTicket(true)}
                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm shadow-indigo-500/30"
               >
                 <Ticket size={16} /> Create Ticket
@@ -715,8 +652,254 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
+      {/* Create Ticket Modal */}
+            {/* Create Ticket Modal */}
+            {showCreateTicket && (
+              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+                <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
+                  <div className="sticky top-0 bg-white p-6 border-b border-slate-100 rounded-t-2xl z-10 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-800">Create New Ticket</h2>
+                        <p className="text-sm text-slate-500 mt-1">Fill in the details to create a support ticket</p>
+                      </div>
+                      <button
+                        onClick={() => setShowCreateTicket(false)}
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+                      >
+                        <XCircle className="w-6 h-6" />
+                      </button>
+                  </div>
 
-      {showCreateTicket && <CreateTicketModal onClose={() => setShowCreate(false)} />}
+                  <div className="p-6 space-y-8">
+                    {/* Customer Information Section */}
+                  <section>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2 pb-2 border-b border-slate-100">
+                      <User className="w-4 h-4 text-indigo-600" />
+                      Customer Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Customer Selection Dropdown */}
+                      <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Select Customer <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                          value={newTicket.customer_id || ''}
+                          onChange={(e) => {
+                              const selectedCustomer = customers.find((c: any) => c.id === parseInt(e.target.value));
+                              if (selectedCustomer) {
+                              setNewTicket({
+                                  ...newTicket,
+                                  customer_id: selectedCustomer.id,
+                                  customer_name: selectedCustomer.customer_name,
+                                  account_number: selectedCustomer.account_number,
+                                  phone: selectedCustomer.primary_phone,
+                                  email: selectedCustomer.email_address || ''
+                              });
+                              }
+                          }}
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                          >
+                          <option value="">-- Select a customer --</option>
+                          {customers?.map((customer: any) => (
+                              <option key={customer.id} value={customer.id}>
+                              {customer.customer_name} - {customer.account_number}
+                              </option>
+                          ))}
+                      </select>
+                      <p className="text-xs text-slate-500 mt-1">
+                          Select an existing customer to auto-fill their information
+                      </p>
+                      </div>
+
+                      {/* Auto-filled Customer Details (Read-only) */}
+                      <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Customer Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                          type="text"
+                          value={newTicket.customer_name}
+                          readOnly
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                          placeholder="Auto-filled from selection"
+                      />
+                      </div>
+                      <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Account Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                          type="text"
+                          value={newTicket.account_number}
+                          readOnly
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                          placeholder="Auto-filled from selection"
+                      />
+                      </div>
+                      <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Phone Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                          type="tel"
+                          value={newTicket.phone}
+                          readOnly
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                          placeholder="Auto-filled from selection"
+                      />
+                      </div>
+                      <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Email Address
+                      </label>
+                      <input
+                          type="email"
+                          value={newTicket.email}
+                          readOnly
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                          placeholder="Auto-filled from selection"
+                      />
+                      </div>
+                  </div>
+                  </section>
+
+                    {/* Ticket Details Section */}
+                    <section>
+                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2 pb-2 border-b border-slate-100">
+                        <MessageSquare className="w-4 h-4 text-indigo-600" />
+                        Ticket Details
+                      </h3>
+                      <div className="space-y-5">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            Subject <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={newTicket.subject}
+                            onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                            placeholder="Brief description of the issue"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                              Ticket Type <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={newTicket.ticket_type}
+                              onChange={(e) => setNewTicket({ ...newTicket, ticket_type: e.target.value as TicketType })}
+                              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                            >
+                              <option value="Technical Issue">Technical Issue</option>
+                              <option value="Support Request">Support Request</option>
+                              <option value="Service Request">Service Request</option>
+                              <option value="Escalation">Escalation</option>
+                              <option value="General Inquiry">General Inquiry</option>
+                            </select>
+                          </div>
+                           <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                              Escalation Level <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={newTicket.escalation_level}
+                              onChange={(e) => setNewTicket({ ...newTicket, escalation_level: e.target.value as EscalationLevel })}
+                              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                            >
+                              <option value="Level 1">Level 1 (Standard)</option>
+                              <option value="Level 2">Level 2 (Escalated)</option>
+                              <option value="Level 3">Level 3 (Critical)</option>
+                            </select>
+                          </div>
+                           <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                              Priority <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={newTicket.priority}
+                              onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as Priority })}
+                              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                            >
+                              <option value="Low">Low</option>
+                              <option value="Medium">Medium</option>
+                              <option value="High">High</option>
+                              <option value="Critical">Critical</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                              Category <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={newTicket.category}
+                              onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value as Category })}
+                              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                            >
+                              <option value="Connectivity">Connectivity</option>
+                              <option value="Performance">Performance</option>
+                              <option value="Billing">Billing</option>
+                              <option value="Equipment">Equipment</option>
+                              <option value="Service Request">Service Request</option>
+                              <option value="Installation">Installation</option>
+                              <option value="Technical">Technical</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                              Assign To <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={newTicket.assigned_to}
+                              onChange={(e) => setNewTicket({ ...newTicket, assigned_to: e.target.value })}
+                              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                            >
+                              {users?.map((user: any) => (
+                                <option key={user.id} value={user.name}>
+                                  {user.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            Description <span className="text-red-500">*</span>
+                          </label>
+                          <textarea
+                            value={newTicket.description}
+                            onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                            rows={5}
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm resize-none"
+                            placeholder="Provide detailed information about the issue..."
+                          />
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <div className="sticky bottom-0 bg-slate-50 px-6 py-4 border-t border-slate-200 rounded-b-2xl flex gap-3 justify-end">
+                    <button
+                      onClick={() => setShowCreateTicket(false)}
+                      className="px-6 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-white hover:border-slate-300 transition-all font-medium text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCreateTicket}
+                      className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20 text-sm"
+                    >
+                      <Ticket size={16} />
+                      Create Ticket
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
     </div>
   );
 }
@@ -756,3 +939,6 @@ function KpiCard({ title, value, badge, badgePositive, icon: Icon, iconBg, iconC
     </div>
   );
 }
+
+
+export default Dashboard;

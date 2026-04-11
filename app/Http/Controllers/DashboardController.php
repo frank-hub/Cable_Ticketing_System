@@ -124,6 +124,22 @@ class DashboardController extends Controller
         $totalCustomers  = Customer::count();
         $activeCustomers = Customer::where('status', 'Active')->count();
 
+
+
+        $tickets = Ticket::with('customer')
+            ->latest()
+            ->get(['id', 'ticket_number', 'subject', 'customer_name', 'status', 'priority', 'category', 'created_at']);
+            
+        $customers = Customer::select('id', 'customer_name', 'account_number', 'primary_phone', 'email_address')
+            ->where('status', 'Active')
+            ->orderBy('customer_name')
+            ->get();
+
+        $users = User::select('id', 'name', 'email')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('dashboard', [
             'kpis' => [
                 'total_tickets'       => $totalTickets,
@@ -144,6 +160,11 @@ class DashboardController extends Controller
             'by_category'       => $byCategory,
             'agent_performance' => $agentPerformance,
             'sla_breaches'      => $slaBreaches,
+
+
+            'data'      => $tickets,
+            'customers' => $customers,
+            'users'     => $users,
         ]);
     }
 

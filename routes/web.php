@@ -42,6 +42,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('ticket/{ticket_number}',[TicketController::class, 'show']);
     });
 
+    Route::post('tickets/{ticket_number}/notes',[TicketController::class, 'addNote']);
+
+
 });
 Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function () {
 
@@ -54,16 +57,16 @@ Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function 
         });
     });
 
-    
+});
 
+Route::middleware(['auth', 'role:Technician'])->group(function () {
+    
     // Ticket updates and details
     Route::get('tickets/{ticket}/start',   [TicketController::class, 'startWorking']);
     Route::post('tickets/{ticket}/hold',    [TicketController::class, 'putOnHold']);
     Route::post('tickets/{ticket}/resume',  [TicketController::class, 'resumeFromHold']);
     Route::post('tickets/{ticket}/resolve', [TicketController::class, 'resolve']);
     Route::post('tickets/{ticket}/close',   [TicketController::class, 'close']);
-
-
 });
 
 

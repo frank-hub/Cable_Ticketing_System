@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\Customer;
+use App\Models\TicketNote;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
@@ -314,12 +315,31 @@ class TicketController extends Controller
         }
     }
 
-    public function addNote(Request $request, Ticket $ticket)
+    public function addNote(Request $request, Ticket $ticket , $ticket_number = null)
     {
         $validator = Validator::make($request->all(), [
             'note'        => 'required|string',
             'is_internal' => 'boolean',
         ]);
+
+        if ($ticket_number) {
+            // If ticket_number is provided, store the note
+            TicketNote::create([
+                'ticket_id'   => $ticket_number,
+                'note'        => $request->note,
+                'author_name' => Auth::user()?->name ?? 'System',
+                'is_internal' => $request->get('is_internal', false),
+                'user_id'   => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note added successfully',
+            ]); 
+
+        }
+
+        
 
         if ($validator->fails()) {
             return response()->json([

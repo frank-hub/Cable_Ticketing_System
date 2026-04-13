@@ -20,6 +20,7 @@ export interface Customer {
 
 
 export interface Ticket {
+  customer: any;
   ticket_number: string;
   subject: string;
   customer_name: string;

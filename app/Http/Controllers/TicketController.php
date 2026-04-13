@@ -7,12 +7,12 @@ use App\Models\Ticket;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Env;
 
 class TicketController extends Controller
@@ -56,8 +56,16 @@ class TicketController extends Controller
 
     public function index(Request $request)
     {
+        $user  = $request->user();
         $query = Ticket::with(['customer', 'assignedUser', 'notes']);
 
+        // ── Technician: scope everything to their own tickets ──────────────
+        $isTechnician = $user->role === 'Technician';
+        if ($isTechnician) {
+            $query->where('assigned_to', $user->name);
+        }
+
+        // ── Filters ────────────────────────────────────────────────────────
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -81,7 +89,8 @@ class TicketController extends Controller
             $query->where('category', $request->category);
         }
 
-        if ($request->has('assigned_to')) {
+        // Technician must not be able to filter by other users' tickets
+        if ($request->has('assigned_to') && !$isTechnician) {
             $query->where('assigned_user_id', $request->assigned_to);
         }
 
@@ -89,12 +98,18 @@ class TicketController extends Controller
             $query->where('escalation_level', $request->escalation_level);
         }
 
+        // ── Sorting & pagination ───────────────────────────────────────────
         $sortBy    = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
         $perPage = $request->get('per_page', 15);
         $tickets = $query->paginate($perPage);
+
+        // ── Stats: scoped to own tickets for Technician ────────────────────
+        $statsQuery = $isTechnician
+            ? Ticket::where('assigned_to', $user->name)
+            : new Ticket;
 
         $customers = Customer::select('id', 'customer_name', 'account_number', 'primary_phone', 'email_address')
             ->where('status', 'Active')
@@ -106,17 +121,18 @@ class TicketController extends Controller
             ->orderBy('name')
             ->get();
 
+
         return Inertia::render('support/tickets', [
             'success'   => true,
             'data'      => $tickets,
             'customers' => $customers,
             'users'     => $users,
             'stats'     => [
-                'total'       => Ticket::count(),
-                'open'        => Ticket::open()->count(),
-                'in_progress' => Ticket::inProgress()->count(),
-                'resolved'    => Ticket::resolved()->count(),
-                'critical'    => Ticket::critical()->count(),
+                'total'       => $statsQuery->count(),
+                'open'        => $statsQuery->clone()->open()->count(),
+                'in_progress' => $statsQuery->clone()->inProgress()->count(),
+                'resolved'    => $statsQuery->clone()->resolved()->count(),
+                'critical'    => $statsQuery->clone()->critical()->count(),
             ]
         ]);
     }
@@ -168,6 +184,7 @@ class TicketController extends Controller
                 'category'         => $request->category,
                 'description'      => $request->description,
                 'assigned_to'      => $request->assigned_to,
+                'assigned_user_id' => $request->assigned_to ? User::where('name', $request->assigned_to)->value('id') : null,
                 'status'           => 'Open',
             ]);
 
@@ -198,22 +215,18 @@ class TicketController extends Controller
         }
     }
 
-    // =========================================================================
-    // UPDATED: show() — now includes all fields TicketDetailsPage.tsx expects
-    // =========================================================================
-
-    /**
-     * GET /tickets/{ticket_number}
-     *
-     * Returns all props consumed by TicketDetailsPage.tsx.
-     * Key additions vs the original: started_at, paused_at, total_paused_minutes,
-     * and a properly mapped notes array with is_internal cast to bool.
-     */
-    public function show($ticket_number)
+    public function show(Request $request, $ticket_number)
     {
+        $user   = $request->user();
+
         $ticket = Ticket::with(['customer', 'assignedUser', 'notes'])
             ->where('ticket_number', $ticket_number)
             ->firstOrFail();
+
+        // Technician can only view their own tickets
+        if ($user->role === 'Technician' && $ticket->assigned_to !== $user->name) {
+            abort(403, 'You can only view your own tickets.');
+        }
 
         return Inertia::render('support/ticket_details', [
             'success' => true,
@@ -237,9 +250,9 @@ class TicketController extends Controller
                 'closed_at'               => $ticket->closed_at,
                 'response_time_minutes'   => $ticket->response_time_minutes,
                 'resolution_time_minutes' => $ticket->resolution_time_minutes,
-                'started_at'              => $ticket->started_at,            // NEW
-                'paused_at'               => $ticket->paused_at,             // NEW
-                'total_paused_minutes'    => $ticket->total_paused_minutes ?? 0, // NEW
+                'started_at'              => $ticket->started_at,
+                'paused_at'               => $ticket->paused_at,
+                'total_paused_minutes'    => $ticket->total_paused_minutes ?? 0,
                 'resolution_summary'      => $ticket->resolution_summary,
                 'satisfaction_rating'     => $ticket->satisfaction_rating,
                 'created_at'              => $ticket->created_at,
@@ -252,6 +265,14 @@ class TicketController extends Controller
                     'created_at'  => $note->created_at,
                 ]),
             ],
+
+            // Users for the "Assigned To" dropdown in edit mode
+            // Filtered to only roles that handle tickets
+            'users' => User::select('id', 'name')
+                ->whereIn('role', ['Admin', 'Manager', 'Support Agent', 'Technician'])
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

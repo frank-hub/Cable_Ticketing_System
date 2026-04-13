@@ -22,9 +22,4 @@ Route::group(['prefix' => 'customers'], function () {
 })->middleware('auth:sanctum');
 
 
-Route::group(['prefix' => 'support'], function () {
 
-    Route::post('ticket',[TicketController::class, 'store']);
-    Route::get('/ticket/{ticket_number}',[TicketController::class, 'show']);
-
-});

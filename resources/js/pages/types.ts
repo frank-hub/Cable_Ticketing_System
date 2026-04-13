@@ -32,8 +32,8 @@ export interface Ticket {
   status: string;
   priority: string;
   assigned_to: string;
-  createdAt: string;
-  lastUpdate: string;
+  created_at: string;
+  updated_at: string;
   description?: string;
 }
 

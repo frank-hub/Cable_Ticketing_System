@@ -9,6 +9,7 @@ import {
   ArrowDownRight, ArrowRight, ShieldAlert, UserCheck, RefreshCw,
   User,
   XCircle,
+  LogOut,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -133,8 +134,6 @@ const menuItems = [
     id: 'settings', label: 'Settings', icon: Settings, path: '/settings',
     subItems: [
       { id: 'users',      label: 'Users & Roles',     path: '/settings/users' },
-      { id: 'notifs',     label: 'Notifications',     path: '/settings/notifications' },
-      { id: 'sla-config', label: 'SLA Configuration', path: '/settings/sla' },
       { id: 'system',     label: 'System Settings',   path: '/settings/system' },
     ],
   },
@@ -182,6 +181,8 @@ function Sidebar() {
     );
   };
 
+    const {auth} = usePage().props as any;
+  
   return (
     <aside className="w-64 bg-slate-900 min-h-screen flex flex-col border-r border-slate-800 shrink-0">
       <div className="p-5 flex items-center gap-3 border-b border-slate-800">
@@ -198,11 +199,11 @@ function Sidebar() {
       <div className="p-4 border-t border-slate-800">
         <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl">
           <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-bold">
-            AD
+            {auth.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Admin User</p>
-            <p className="text-xs text-slate-400">System Admin</p>
+            <p className="text-sm font-semibold text-white">{auth.user.name}</p>
+            <p className="text-xs text-slate-400">{auth.user.role}</p>
           </div>
         </div>
       </div>
@@ -218,9 +219,9 @@ const Dashboard: React.FC<{ tickets: any[] }> = ({ tickets: propTickets }) => {
     by_status, by_category, agent_performance, sla_breaches,
   } = usePage<PageProps>().props;
 
-  const [search, setSearch]               = useState('');
+  const [search, setSearch]= useState('');
 
-  const {customers,users} = usePage().props as any;
+  const {customers,users,auth} = usePage().props as any;
 
   const initialTickets = propTickets || [];
 
@@ -307,30 +308,26 @@ const Dashboard: React.FC<{ tickets: any[] }> = ({ tickets: propTickets }) => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-slate-900">Dashboard Overview</h1>
-              <p className="text-sm text-slate-500 mt-0.5">Welcome back — here's what's happening today.</p>
+             <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg text-sm font-medium">
+              Welcome back, {auth.user.name} ,here's what's happening today.!
+        </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  onKeyDown={handleSearch}
-                  placeholder="Search tickets, customers…"
-                  className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg w-72 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
-                />
-              </div>
-              <button className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-slate-600" />
+              
+              <button 
+                onClick={() => router.post('/logout')}
+                className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <LogOut className="w-5 h-5 text-slate-600" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
-              <button
-                onClick={() => setShowCreateTicket(true)}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm shadow-indigo-500/30"
-              >
-                <Ticket size={16} /> Create Ticket
-              </button>
+            </button>
+              {auth.user.role !== 'Technician' && (
+                <button
+                  onClick={() => setShowCreateTicket(true)}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm shadow-indigo-500/30"
+                >
+                  <Ticket size={16} /> Create Ticket
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -608,7 +605,7 @@ const Dashboard: React.FC<{ tickets: any[] }> = ({ tickets: propTickets }) => {
                   {recent_tickets.map((ticket) => (
                     <tr
                       key={ticket.id}
-                      onClick={() => router.visit(`/support/tickets/${ticket.ticket_number}`)}
+                      onClick={() => router.visit(`/support/ticket/${ticket.ticket_number}`)}
                       className={`hover:bg-slate-50 transition-colors cursor-pointer ${ticket.is_overdue ? 'bg-red-50/40' : ''}`}
                     >
                       <td className="px-6 py-3.5">

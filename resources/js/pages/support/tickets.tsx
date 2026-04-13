@@ -30,7 +30,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
 
   const {data} = usePage<PageProps>().props;
-  const {customers,users} = usePage().props as any;
+  const {customers,users ,auth} = usePage().props as any;
   const initialTickets = propTickets || data?.data || [];
   const [tickets, setTickets] = useState(initialTickets);
 
@@ -40,6 +40,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
   const [filterType, setFilterType] = useState('all');
   const [filterEscalation, setFilterEscalation] = useState('all');
   const [showCreateTicket, setShowCreateTicket] = useState(false);
+
 
   const [newTicket, setNewTicket] = useState<NewTicketData>({
     customer_id: null,
@@ -53,8 +54,9 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
     escalation_level: 'Level 1',
     priority: 'Medium',
     description: '',
-    assigned_to: 'John Doe'
+    assigned_to: ''
   });
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -111,6 +113,11 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
   };
 
   const handleCreateTicket = async() => {
+    if (!newTicket.assigned_to) {
+        alert('Please select an assignee');
+        return;
+    }
+
     if (!newTicket.customer_name || !newTicket.account_number || !newTicket.phone || !newTicket.subject || !newTicket.description) {
       alert('Please fill in all required fields');
       return;
@@ -129,8 +136,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
       ...newTicket,
       ticket_number: `TK-${2400 + tickets.length + 1}`,
       status: 'Open',
-      createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
-      lastUpdate: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      created_at: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      updated_at: new Date().toISOString().slice(0, 16).replace('T', ' '),
       customer: newTicket.customer_name,
     };
     setTickets([createdTicket, ...tickets]);
@@ -150,7 +157,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
       escalation_level: 'Level 1',
       priority: 'Medium',
       description: '',
-      assigned_to: 'John Doe'
+      assigned_to: ''
     });
   };
 
@@ -207,13 +214,15 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Unified Support Tickets</h1>
             <p className="text-slate-500">Manage all tickets, requests, and escalations in one place.</p>
           </div>
-          <button
-            onClick={() => setShowCreateTicket(true)}
-            className="bg-indigo-600 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 flex items-center gap-2"
-          >
-            <Ticket size={18} />
-            Create New Ticket
-          </button>
+          {auth.user.role !== 'Technician' && (
+            <button
+              onClick={() => setShowCreateTicket(true)}
+              className="bg-indigo-600 text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 flex items-center gap-2"
+            >
+              <Ticket size={18} />
+              Create New Ticket
+            </button>
+          )}
         </div>
 
         {/* Stats Strip */}
@@ -346,7 +355,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                           <p className="text-sm font-semibold text-slate-900 line-clamp-2">{ticket.subject}</p>
                           <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
                             <Calendar className="w-3 h-3" />
-                            {ticket.lastUpdate}
+                            {ticket.created_at.slice(0, 16).replace('T', ' ')}
                           </div>
                         </div>
                       </td>
@@ -397,7 +406,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => {
-                                window.location.href = `/api/support/ticket/${ticket.ticket_number}`;
+                                window.location.href = `/support/ticket/${ticket.ticket_number}`;
                             }}
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                             title="View Details"
@@ -653,6 +662,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                         onChange={(e) => setNewTicket({ ...newTicket, assigned_to: e.target.value })}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
                       >
+                        <option value="">-- Select an assignee --</option>
                         {users.map((user: any) => (
                           <option key={user.id} value={user.name}>
                             {user.name}
@@ -685,13 +695,14 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
               >
                 Cancel
               </button>
-              <button
-                onClick={handleCreateTicket}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20 text-sm"
-              >
-                <Ticket size={16} />
-                Create Ticket
-              </button>
+                    <button
+                        onClick={handleCreateTicket}
+                        className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20 text-sm"
+                    >
+                        <Ticket size={16} />
+                        Create Ticket
+                    </button> 
+            
             </div>
           </div>
         </div>

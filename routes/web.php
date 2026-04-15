@@ -22,6 +22,9 @@ Route::middleware(['auth', 'role:Admin,Manager'])->group(function () {
 
         Route::group(['prefix' => 'settings'], function () {
         Route::get('users', [UserController::class, 'index'])->name('settings.users');
+        Route::get('user/{id}', [UserController::class, 'show']);
+        Route::put('user/{id}', [UserController::class, 'updateUser']);
+        Route::delete('delete-user/{id}', [UserController::class, 'deleteUser']);
         Route::get('system', function () {
             return Inertia::render('admin_settings/system');
         });
@@ -32,7 +35,7 @@ Route::middleware(['auth', 'role:Admin,Manager'])->group(function () {
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard',             [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // JSON endpoint for live refresh
     Route::get('/api/dashboard',         [DashboardController::class, 'data']);
 
@@ -60,7 +63,7 @@ Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function 
 });
 
 Route::middleware(['auth', 'role:Technician'])->group(function () {
-    
+
     // Ticket updates and details
     Route::get('tickets/{ticket}/start',   [TicketController::class, 'startWorking']);
     Route::post('tickets/{ticket}/hold',    [TicketController::class, 'putOnHold']);

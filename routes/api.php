@@ -11,8 +11,10 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/user', [UserController::class, 'storeUser']);
-Route::post('/support/ticket', [TicketController::class, 'store']);
+Route::middleware([ 'role:Admin,Manager'])->group(function () {
+    Route::post('/user', [UserController::class, 'storeUser']);
+    Route::post('/support/ticket', [TicketController::class, 'store']);
+});
 
 
 

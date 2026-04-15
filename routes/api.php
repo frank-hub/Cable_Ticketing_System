@@ -12,6 +12,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/user', [UserController::class, 'storeUser']);
+Route::post('/support/ticket', [TicketController::class, 'store']);
 
 
 

@@ -199,7 +199,14 @@ class TicketController extends Controller
             }
 
             DB::commit();
+
+            $user = User::where('id', $ticket->assigned_user_id)->first();
+
             $this->sendSms($ticket->phone, "Your ticket {$ticket->ticket_number} has been created. We will get back to you shortly.");
+
+            // ticket details to the technician's phone
+            $this->sendSms($user->phone, "Ticket {$ticket->ticket_number} has been assigned to you. Details:Customer: {$ticket->customer_name},{$ticket->phone}, Priority: {$ticket->ticket_type}. Please address it ASAP thank you.");
+
 
             return Inertia::render('support/tickets', [
                 'success' => true,
@@ -335,11 +342,11 @@ class TicketController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Note added successfully',
-            ]); 
+            ]);
 
         }
 
-        
+
 
         if ($validator->fails()) {
             return response()->json([

@@ -397,7 +397,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold ring-2 ring-white">
-                            {ticket.assigned_to.charAt(0)}
+                            {ticket?.assigned_to?.charAt(0)?.toUpperCase()}
                           </div>
                           <span className="text-sm text-slate-700">{ticket.assigned_to}</span>
                         </div>
@@ -701,8 +701,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                     >
                         <Ticket size={16} />
                         Create Ticket
-                    </button> 
-            
+                    </button>
+
             </div>
           </div>
         </div>

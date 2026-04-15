@@ -29,6 +29,7 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
 
   const [newUser, setNewUser] = useState<Partial<SystemUser>>({
     name: '',
+    phone: '254',
     email: '',
     password: '',
     confirmPassword: '',
@@ -62,6 +63,7 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
     try{
         const request = await axios.post('/api/user', {
         name: newUser.name,
+        phone : newUser.phone,
         email: newUser.email,
         password: newUser.password,
         password_confirmation: newUser.confirmPassword,
@@ -72,12 +74,13 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
         alert(`User added successfully! ,  ${newUser.name} has been invited.`);
 
     }catch(error : any){
-        console.error('Error adding user:', error.response);
+        console.error('Error adding user:', error.response.data.statusText || error.message);
         alert('Failed to add user. Please try again.');
     }
     const user: SystemUser = {
       id: `USR-00${users.length + 1}`,
       name: newUser.name,
+      phone: newUser.phone || '',
       email: newUser.email,
       password: newUser.password ? newUser.password : '',
       role: newUser.role as UserRole,
@@ -87,12 +90,13 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
 
     setUsers([...users, user]);
     setShowAddModal(false);
-    setNewUser({ name: '', email: '', password: '', role: 'Support Agent', status: 'Active' });
+    setNewUser({ name: '', phone: '254', email: '', password: '', role: 'Support Agent', status: 'Active' });
   };
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.phone.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -253,6 +257,16 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
                   onChange={(e) => setNewUser({...newUser, name: e.target.value})}
                   className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm"
                   placeholder="e.g. John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone</label>
+                <input
+                  type="tel"
+                   value={newUser.phone}
+                  onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                  placeholder="e.g. 254 712 345 678"
                 />
               </div>
               <div>

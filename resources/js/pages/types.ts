@@ -120,6 +120,7 @@ export type UserStatus = 'Active' | 'Inactive' | 'Invited';
 export interface SystemUser {
   id: string;
   name: string;
+  phone: string;
   email: string;
   role: UserRole;
   status: UserStatus;

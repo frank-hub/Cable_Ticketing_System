@@ -109,7 +109,7 @@ const TicketDetailsPage = () => {
   /** "Resume Work" button */
   const handleResumeFromHold = () => {
     setProcessing(true);
-    router.post(`/tickets/${ticket.id}/resume`, {}, {
+    router.post(ticketUrl('/resume'), {}, {
       preserveScroll: true,
       onFinish: () => setProcessing(false),
     });
@@ -602,13 +602,13 @@ const TicketDetailsPage = () => {
                 )}
 
                 {/* Escalate */}
-                <button
+                {/* <button
                   onClick={() => setShowEscalateModal(true)}
                   disabled={processing}
                   className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Flag className="w-4 h-4" /> Escalate
-                </button>
+                </button> */}
               </div>
             </div>
 

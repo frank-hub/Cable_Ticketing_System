@@ -12,10 +12,17 @@ class CheckRole
         $user = $request->user();
 
         if (!$user) {
+            // Check if API request
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
             return redirect()->route('login');
         }
 
         if (!in_array($user->role, $roles)) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
             return redirect()->route('dashboard')
                 ->with('error', 'You do not have permission to access that page.');
         }

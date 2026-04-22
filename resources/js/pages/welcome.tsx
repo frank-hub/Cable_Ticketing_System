@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Ticket, Headphones, Clock, BarChart3, ArrowRight, CheckCircle, LogIn } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 export default function WelcomePage() {
   const [isHovered, setIsHovered] = useState(false);
@@ -17,12 +18,10 @@ export default function WelcomePage() {
         {/* Header with Login */}
         <div className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-              <Ticket className="text-white" size={24} />
-            </div>
+            <img src={logo} alt="Cable One Logo" className="w-40" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Cable</h2>
-              <p className="text-sm text-gray-600">Ticketing System</p>
+              <h2 className="text-2xl font-bold text-gray-900">Ticketing <br /> System</h2>
+              {/* <p className="text-sm text-gray-600">Ticketing System</p> */}
             </div>
           </div>
 
@@ -105,7 +104,7 @@ export default function WelcomePage() {
 
               <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-100">
                 <p className="text-sm text-gray-700 font-medium mb-2">🎯 Start improving your support today</p>
-                <p className="text-xs text-gray-600">Join hundreds of companies using CablePro for their customer support management.</p>
+                <p className="text-xs text-gray-600">The future of customer support is here.</p>
               </div>
             </div>
           </div>
@@ -113,7 +112,7 @@ export default function WelcomePage() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-gray-500 text-sm">
-          <p>© 2024 CablePro. All rights reserved. | Privacy Policy | Terms of Service</p>
+          <p>© {new Date().getFullYear()} Cable One Networks. All rights reserved. | Privacy Policy | Terms of Service</p>
         </div>
       </div>
     </div>

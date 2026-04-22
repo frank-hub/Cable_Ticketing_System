@@ -30,6 +30,7 @@ class Ticket extends Model
         'assigned_user_id',
         'status',
         'started_at',
+        'paused_at',
         'first_response_at',
         'resolved_at',
         'closed_at',
@@ -131,9 +132,17 @@ class Ticket extends Model
     // Methods
     public static function generateTicketNumber(): string
     {
-        $lastTicket = self::latest('id')->first();
-        $number = $lastTicket ? $lastTicket->id + 1 : 1;
-        return 'TK-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+        $last = self::withTrashed()
+            ->where('ticket_number', 'like', 'CON-%')
+            ->orderByDesc('id')
+            ->value('ticket_number');
+
+        if (!$last) {
+            return 'CON-0001';
+        }
+
+        $lastNumber = (int) str_replace('CON-', '', $last);
+        return 'CON-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
     }
 
     public function markAsInProgress()
@@ -177,7 +186,7 @@ class Ticket extends Model
             'note' => $note,
             'author_name' => $authorName,
             'is_internal' => $isInternal,
-            'user_id' => $userId
+            'user_id' => $userId,
         ]);
     }
 }

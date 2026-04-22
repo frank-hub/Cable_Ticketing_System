@@ -202,7 +202,8 @@ class TicketController extends Controller
 
             $user = User::where('id', $ticket->assigned_user_id)->first();
 
-            $this->sendSms($ticket->phone, "Your ticket {$ticket->ticket_number} has been created. We will get back to you shortly.");
+
+            $this->sendSms($ticket->phone, "Dear {$ticket->customer_name},your query has been raised under {$ticket->ticket_number}  and assigned to technician {$user->name} for resolution. For further information kindly call 0207905050 toll free.");
 
             // ticket details to the technician's phone
             $this->sendSms($user->phone, "Ticket {$ticket->ticket_number} has been assigned to you. Details:Customer: {$ticket->customer_name},{$ticket->phone}, Priority: {$ticket->ticket_type}. Please address it ASAP thank you.");
@@ -377,8 +378,9 @@ class TicketController extends Controller
         }
     }
 
-    public function escalate(Request $request, Ticket $ticket)
+    public function escalate(Request $request, Ticket $ticket , $ticket_number = null)
     {
+        
         $validator = Validator::make($request->all(), [
             'escalation_level' => 'required|in:Level 1,Level 2,Level 3',
             'reason'           => 'required|string',
@@ -394,12 +396,12 @@ class TicketController extends Controller
         try {
             $ticket->escalate($request->escalation_level);
             $ticket->addNote(
-                "Escalated to {$request->escalation_level}. Reason: {$request->reason}",
+                "Ticket escalated to {$request->escalation_level}. Reason: {$request->reason}",
                 Auth::user()?->name ?? 'System',
                 true,
                 Auth::id()
             );
-
+    
             return response()->json([
                 'success' => true,
                 'message' => 'Ticket escalated successfully',
@@ -528,6 +530,7 @@ class TicketController extends Controller
      */
     public function resumeFromHold(Ticket $ticket)
     {
+
         if ($ticket->status !== 'On Hold' || !$ticket->paused_at) {
             return response()->json([
                 'success' => false,
@@ -798,8 +801,9 @@ class TicketController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    public function destroy(Ticket $ticket)
+    public function destroy($ticket_number)
     {
+        $ticket = Ticket::where('ticket_number', $ticket_number)->firstOrFail();
         try {
             $ticket->delete();
             return response()->json(['success' => true, 'message' => 'Ticket deleted successfully']);

@@ -166,7 +166,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
       setTickets(tickets.filter(t => t.ticket_number !== ticket_number));
     }
       try {
-        router.get('/api/support/ticket/delete/${ticket_number}', {
+        router.get('/support/ticket/delete/${ticket_number}', {
         preserveScroll: true,
 
       });
@@ -179,34 +179,31 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
         alert(`Ticket ${ticket_number} deleted successfully`);
     };
     
+    const handleDeleteTicket = async (ticket_number: string) => {
+        if (!window.confirm('Are you sure you want to delete this ticket?')) return;
 
-  const handleDeleteTicket = async (ticket_number: string) => {
-    if (window.confirm('Are you sure you want to delete this ticket?')) {
-      setTickets(tickets.filter(t => t.ticket_number !== ticket_number));
-    }
+        try {
+            const response = await fetch(`/ticket/delete/${ticket_number}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
 
-try {
-    const response = await fetch(`/support/ticket/delete/${ticket_number}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-    });
-
-    if (response.ok) {
-        alert(`Ticket ${ticket_number} deleted successfully`);
-    } else {
-        const data = await response.json();
-        alert(`Failed to delete ticket: ${data?.message || 'Unknown error'}`);
-    }
-} catch (error) {
-    console.error('Error deleting ticket', error);
-    alert('Failed to delete ticket: Unknown error');
-}
-
-  };
+            if (response.ok) {
+                setTickets(tickets.filter(t => t.ticket_number !== ticket_number));
+                alert(`Ticket ${ticket_number} deleted successfully`);
+            } else {
+                const data = await response.json();
+                alert(`Failed to delete ticket: ${data?.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting ticket', error);
+            alert('Failed to delete ticket: Unknown error');
+        }
+    };
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch =

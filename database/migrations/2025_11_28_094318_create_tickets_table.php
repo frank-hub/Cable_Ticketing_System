@@ -71,6 +71,7 @@ return new class extends Migration
 
             // SLA Tracking
             $table->timestamp('started_at')->nullable();
+            $table->timestamp('paused_at')->nullable();
             $table->timestamp('first_response_at')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamp('closed_at')->nullable();

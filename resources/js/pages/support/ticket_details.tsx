@@ -50,9 +50,14 @@ const SLA_TARGETS: Record<string, { responseMinutes: number; resolutionMinutes: 
   Medium:   { responseMinutes: 480,  resolutionMinutes: 4320  },
   Low:      { responseMinutes: 1440, resolutionMinutes: 10080 },
 };
+interface Technician {
+    id: number;
+    name: string;
+}
 
 const TicketDetailsPage = () => {
   const ticket = usePage().props.data as TicketDetails;
+  const technicians =(usePage().props.technicians as Technician[]) ?? [];
 
   // ── UI-only state (no data mutation here anymore) ──────────────────────────
   const [isEditing, setIsEditing]                   = useState(false);
@@ -170,9 +175,10 @@ const TicketDetailsPage = () => {
   };
 
   /** Edit panel save — PATCH the ticket fields */
+//    Reassign Ticket function
   const handleSaveChanges = () => {
     setProcessing(true);
-    router.patch(ticketUrl(), editableTicket, {
+    router.patch(ticketUrl('/reassign' ), editableTicket, {
       preserveScroll: true,
       onSuccess: () => setIsEditing(false),
       onFinish:  () => setProcessing(false),
@@ -384,9 +390,13 @@ const TicketDetailsPage = () => {
                   onChange={(e) => setEditableTicket({ ...editableTicket, assigned_to: e.target.value })}
                   className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                 >
-                  {['John Doe','Jane Smith','Mike Johnson','Sarah Williams'].map(u => (
-                    <option key={u} value={u}>{u}</option>
-                  ))}
+                    <option value="">Currently Assigned:{ticket.assigned_to || 'Unassigned'}</option>
+                    {technicians.map((tech ) => (
+                      <option key={tech.id} value={tech.name}>
+                        {tech.name}
+                      </option>
+                    ))}
+
                 </select>
               ) : (
                 <div className="flex items-center gap-2 mt-2">

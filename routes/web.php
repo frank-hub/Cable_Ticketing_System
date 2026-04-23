@@ -28,10 +28,9 @@ Route::middleware(['auth', 'role:Admin,Manager'])->group(function () {
         Route::get('system', function () {
             return Inertia::render('admin_settings/system');
         });
-
-        Route::get('/support/ticket/delete/{ticket_number}', [TicketController::class, 'destroy']);
-
     });
+
+    Route::get('/ticket/delete/{ticket_number}', [TicketController::class, 'destroy']);
 
 });
 
@@ -62,7 +61,11 @@ Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function 
         Route::get('leads', function () {
             return Inertia::render('customers/leads');
         });
+        Route::get('installation/{id}', [InstallationController::class, 'show'])->name('customers.installation.show');
     });
+
+    // Reassign
+    Route::patch('tickets/{ticket_number}/reassign',[TicketController::class,'reassign'])->name('ticket.reassign');
 
 });
 
@@ -72,9 +75,9 @@ Route::middleware(['auth', 'role:Technician,Admin,Manager'])->group(function () 
     Route::get('tickets/{ticket}/start',   [TicketController::class, 'startWorking']);
     Route::post('tickets/{ticket}/hold',    [TicketController::class, 'putOnHold']);
     Route::post('tickets/{ticket}/resume',  [TicketController::class, 'resumeFromHold']);
-    Route::post('tickets/{ticke t}/resolve', [TicketController::class, 'resolve']);
+    Route::post('tickets/{ticket}/resolve', [TicketController::class, 'resolve']);
     Route::post('tickets/{ticket}/close',   [TicketController::class, 'close']);
-            Route::post('tickets/{ticket_number}/escalate',[TicketController::class, 'escalate']);
+    Route::post('tickets/{ticket_number}/escalate',[TicketController::class, 'escalate']);
 
 
 });

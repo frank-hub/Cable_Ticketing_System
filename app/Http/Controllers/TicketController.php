@@ -228,6 +228,12 @@ class TicketController extends Controller
     {
         $user   = $request->user();
 
+        $technicians = User::select('id', 'name')
+            ->where('role', 'Technician')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
         $ticket = Ticket::with(['customer', 'assignedUser', 'notes'])
             ->where('ticket_number', $ticket_number)
             ->firstOrFail();
@@ -239,6 +245,7 @@ class TicketController extends Controller
 
         return Inertia::render('support/ticket_details', [
             'success' => true,
+            'technicians' => $technicians,
             'data'    => [
                 'id'                      => $ticket->id,
                 'ticket_number'           => $ticket->ticket_number,
@@ -811,6 +818,37 @@ class TicketController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete ticket',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function reassign($ticket_number, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'assigned_to' => 'required|string|exists:users,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $ticket = Ticket::where('id', $ticket_number)->firstOrFail();
+        
+        try {
+            $ticket->update([
+                'assigned_to'      => $request->assigned_to,
+                'assigned_user_id' => User::where('name', $request->assigned_to)->value('id'),
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Ticket reassigned successfully']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reassign ticket',
                 'error'   => $e->getMessage()
             ], 500);
         }

@@ -56,7 +56,7 @@ class InstallationController extends Controller
      * Display a listing of installations
      */
    public function index(Request $request)
-   {
+{
         $query = Installation::with(['customer', 'assignedTechnician']);
 
         // Search

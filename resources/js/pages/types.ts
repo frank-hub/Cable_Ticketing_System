@@ -79,6 +79,7 @@ export interface CustomerListTableProps {
 export type InstallationStatus = 'Pending' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
 
 export interface Installation {
+    idno : number;
   id: string;
   customerName: string;
   address: string;

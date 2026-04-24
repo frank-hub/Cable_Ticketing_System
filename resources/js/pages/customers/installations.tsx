@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { usePage } from '@inertiajs/react';
-import axios from 'axios';
+import { usePage ,router } from '@inertiajs/react';
+
 import {
   Wrench,
   Search,
@@ -15,7 +15,8 @@ import {
   Phone,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Edit
 } from 'lucide-react';
 import { InstallationsListProps, Installation, InstallationStatus } from '../types';
 
@@ -33,8 +34,9 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
 
   const [newInstallation, setNewInstallation] = useState<Omit<Installation, 'id'>>({
     customerName: '',
+    idno: 0,
     address: '',
-    contactNumber: '',
+    contactNumber: '254',
     scheduledDate: '',
     technician: 'Unassigned',
     equipment: '',
@@ -63,27 +65,55 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
   };
 
   const handleAddInstallation = async() => {
+    if(!newInstallation.technician || newInstallation.technician === 'Unassigned'){
+      alert('Please assign a technician for the installation.');
+      return;
+    }
+
     if (!newInstallation.customerName || !newInstallation.address || !newInstallation.scheduledDate) {
       alert('Please fill in required fields');
       return;
     }
 
     try {
-        const request = await axios.post('/api/customers/installations', {
-            customer_name: newInstallation.customerName,
-            address: newInstallation.address,
-            contact_number: newInstallation.contactNumber,
-            scheduled_date: newInstallation.scheduledDate,
-            technician: newInstallation.technician,
-            equipment: newInstallation.equipment,
-            status: newInstallation.status,
-            notes: newInstallation.notes
-        });
 
-        if (request.status == 200) {
-            alert("Installation added successfully.");
-            return;
+        router.post('/customers/installations', {
+        customer_name: newInstallation.customerName,
+        address: newInstallation.address,
+        contact_number: newInstallation.contactNumber,
+        idno: newInstallation.idno,
+        scheduled_date: newInstallation.scheduledDate,
+        technician: newInstallation.technician,
+        equipment: newInstallation.equipment,
+        status: newInstallation.status,
+        notes: newInstallation.notes
+    }, {
+        onSuccess: () => {
+            const item: Installation = {
+                id: `INS-${1000 + installations.length + 1}`,
+                ...newInstallation,
+                status: newInstallation.status as InstallationStatus
+            };
+            setInstallations([item, ...installations]);
+            setShowAddModal(false);
+            setNewInstallation({
+                customerName: '',
+                idno: 0,
+                address: '',
+                contactNumber: '',
+                scheduledDate: '',
+                technician: 'Unassigned',
+                equipment: '',
+                status: 'Pending',
+                notes: ''
+            });
+            alert('Installation added successfully.');
+        },
+        onError: (errors) => {
+            console.error('Validation errors:', errors);
+            alert('An error occurred. Please try again.');
         }
+    });
 
     }catch(error :any){
       console.error("Error adding installation:", error.message);
@@ -101,6 +131,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
     setShowAddModal(false);
     setNewInstallation({
       customerName: '',
+      idno: 0,
       address: '',
       contactNumber: '',
       scheduledDate: '',
@@ -238,8 +269,10 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
                         </div>
 
                         <div className="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
-                            <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
-                                <Wrench className="w-5 h-5" />
+                            <button 
+                            onClick={() => window.location.href = `/customers/installation/${inst.idno}`}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
+                                <Edit className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -310,6 +343,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
                             onChange={(e) => setNewInstallation({...newInstallation, technician: e.target.value})}
                             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-sm bg-white"
                          >
+                            <option value="Unassigned">Unassigned</option>
                             {technicians.map((tech:any) => (
                               <option key={tech.id} value={tech.name}>
                                 {tech.name}

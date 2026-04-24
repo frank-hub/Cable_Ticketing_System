@@ -10,14 +10,53 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class InstallationController extends Controller
 {
+
+    // =========================================================================
+    // SMS METHODS
+    // =========================================================================
+    public function sendSms($number , $message)
+    {
+        $data = [
+            "api_key"   => env('SMS_API_KEY'),
+            "sender_id" => env('SMS_SENDER_ID'),
+            "message"   => $message,
+            "phone"     => $number
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post('https://sms.blessedtexts.com/api/sms/v1/sendsms', $data);
+
+        if ($response->successful()) {
+            return response()->json([
+                'status' => 'SMS sent successfully',
+                'response' => $response->json()
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'Failed to send SMS',
+                'error' => $response->body()
+            ]);
+
+            Log::info('SMS Error '.$response->body());
+
+        }
+
+        Log::info('SMS Error '.$response->body());
+
+    }
+
     /**
      * Display a listing of installations
      */
    public function index(Request $request)
-{
+   {
         $query = Installation::with(['customer', 'assignedTechnician']);
 
         // Search
@@ -72,6 +111,7 @@ class InstallationController extends Controller
         // 🔑 Transform data for frontend
         $installations->getCollection()->transform(function ($i) {
             return [
+                'idno' => $i->id,
                 'id' => (string) $i->installation_number,
                 'customerName' => $i->customer_name,
                 'address' => $i->address,
@@ -102,13 +142,14 @@ class InstallationController extends Controller
                 'completed' => Installation::completed()->count(),
             ],
         ]);
+
     }
 
 
     /**
      * Store a newly created installation
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'customer_name' => 'required|string|max:255',
@@ -119,7 +160,7 @@ class InstallationController extends Controller
             'equipment' => 'nullable|string',
             'status' => 'required|in:Pending,Scheduled,In Progress,Completed,Cancelled',
             'notes' => 'nullable|string',
-            'customer_id' => 'nullable|exists:customers,id'
+            'customer_id' => 'nullable|exists:customers,id',
         ]);
 
         if ($validator->fails()) {
@@ -141,14 +182,26 @@ class InstallationController extends Controller
                 'technician' => $request->technician ?? 'Unassigned',
                 'equipment' => $request->equipment,
                 'status' => $request->status,
-                'notes' => $request->notes
+                'notes' => $request->notes,
+                'assigned_technician_id' => User::where('name', $request->technician)->value('id')
             ]);
+
+            $user = User::where('name', $request->technician)->first();
+                         // SMS notification to the customer
+            $this->sendSms(
+                $installation->contact_number,
+                "Dear {$installation->customer_name}, your installation has been scheduled for {$installation->scheduled_date}. A technician will contact you shortly.");
+            // SMS notification to the assigned technician
+            $this->sendSms(
+                $user->phone,
+                "Installation {$installation->installation_number} has been assigned to you. Details:Customer: {$installation->customer_name},{$installation->contact_number}, Status: {$installation->status}. Please address it ASAP thank you.");
+
 
             return response()->json([
                 'success' => true,
                 'message' => 'Installation created successfully',
-                'data' => $installation
             ], 201);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -161,20 +214,20 @@ class InstallationController extends Controller
     /**
      * Display the specified installation
      */
-    public function show(Installation $installation): JsonResponse
+    public function show($id)
     {
-        $installation->load(['customer', 'technician']);
+        $installation = Installation::with(['customer', 'assignedTechnician'])->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $installation
+        return Inertia::render('customers/installation_detail', [
+            'installation' => $installation,
+            'technicians'  => User::select('id', 'name')->where('role','Technician')->orderBy('name')->get(),
         ]);
     }
 
     /**
      * Update the specified installation
      */
-    public function update(Request $request, Installation $installation): JsonResponse
+    public function update(Request $request, Installation $installation)
     {
         $validator = Validator::make($request->all(), [
             'customer_name' => 'sometimes|required|string|max:255',
@@ -199,11 +252,8 @@ class InstallationController extends Controller
         try {
             $installation->update($request->all());
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Installation updated successfully',
-                'data' => $installation->fresh(['customer', 'technician'])
-            ]);
+            return back()->with('success', 'Installation updated successfully');
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -434,15 +484,13 @@ class InstallationController extends Controller
     /**
      * Remove the specified installation (soft delete)
      */
-    public function destroy(Installation $installation): JsonResponse
+    public function destroy(Installation $installation)
     {
         try {
             $installation->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Installation deleted successfully'
-            ]);
+            return redirect()->route('customers.installations')->with('success', 'Installation deleted successfully');
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

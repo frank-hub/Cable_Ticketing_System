@@ -61,7 +61,13 @@ Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function 
         Route::get('leads', function () {
             return Inertia::render('customers/leads');
         });
+        Route::post('/installations', [InstallationController::class, 'store']);
+
+
         Route::get('installation/{id}', [InstallationController::class, 'show'])->name('customers.installation.show');
+        Route::put('/installations/{installation}', [InstallationController::class, 'update']);
+        Route::delete('/installations/delete/{installation}', [InstallationController::class, 'destroy']);
+
     });
 
     // Reassign

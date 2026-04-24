@@ -178,7 +178,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
         alert(`Ticket ${ticket_number} deleted successfully`);
     };
-    
+
     const handleDeleteTicket = async (ticket_number: string) => {
         if (!window.confirm('Are you sure you want to delete this ticket?')) return;
 
@@ -452,9 +452,9 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
                             <Eye className="w-4 h-4" />
                             </button>
 
-                          <button className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Edit">
+                          {/* <button className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Edit">
                             <Edit className="w-4 h-4" />
-                          </button>
+                          </button> */}
                           <button
                             onClick={() => handleDeleteTicket(ticket.ticket_number)}
                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"

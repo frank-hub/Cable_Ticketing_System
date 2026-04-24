@@ -202,10 +202,10 @@ class TicketController extends Controller
 
             $user = User::where('id', $ticket->assigned_user_id)->first();
 
-
+            // SMS notification to the customer
             $this->sendSms($ticket->phone, "Dear {$ticket->customer_name},your query has been raised under {$ticket->ticket_number}  and assigned to technician {$user->name} for resolution. For further information kindly call 0207905050 toll free.");
 
-            // ticket details to the technician's phone
+            // SMS notification to the assigned technician
             $this->sendSms($user->phone, "Ticket {$ticket->ticket_number} has been assigned to you. Details:Customer: {$ticket->customer_name},{$ticket->phone}, Priority: {$ticket->ticket_type}. Please address it ASAP thank you.");
 
 

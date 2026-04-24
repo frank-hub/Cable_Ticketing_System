@@ -68,8 +68,17 @@ class Installation extends Model
     // Methods
     public static function generateInstallationNumber(): string
     {
-        $lastInstallation = self::latest('id')->first();
-        $number = $lastInstallation ? $lastInstallation->id + 1 : 1001;
-        return 'INS-' . $number;
+
+         $last = self::withTrashed()
+            ->where('installation_number', 'like', 'INS-%')
+            ->orderByDesc('id')
+            ->value('installation_number');
+
+        if (!$last) {
+            return 'INS-0001';
+        }
+
+        $lastNumber = (int) str_replace('INS-', '', $last);
+        return 'INS-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
     }
 }

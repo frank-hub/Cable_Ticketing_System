@@ -101,66 +101,45 @@ class CustomerController extends Controller
 
     public function show($id)
     {
-        $customer = Customer::with('tickets')->find($id);
+        $customer = Customer::with('tickets')->findOrFail($id);
 
-        if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Customer not found'
-            ], 404);
-        }
-
-        return Inertia::render('customers/CustomerDetails', [
-            'success' => true,
-            'data' => $customer
+        return Inertia::render('customers/customer_details', [
+            'customer' => $customer,
         ]);
     }
 
 
     public function update(Request $request, $id)
     {
-        $customer = Customer::find($id);
-
-        if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Customer not found'
-            ], 404);
-        }
+        $customer = Customer::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'customer_name' => 'sometimes|required|string|max:255',
-            'primary_phone' => 'sometimes|required|string|max:20',
-            'email_address' => 'sometimes|nullable|email|max:255',
+            'customer_name'    => 'sometimes|required|string|max:255',
+            'primary_phone'    => 'sometimes|required|string|max:20',
+            'email_address'    => 'sometimes|nullable|email|max:255',
             'physical_address' => 'sometimes|nullable|string',
-            'service_package' => 'sometimes|required|in:Basic 20Mbps,Standard 50Mbps,Premium 100Mbps,Business 200Mbps',
-            'status' => 'sometimes|required|in:Active,Suspended,Inactive',
-            'installation_date' => 'sometimes|required|date',
+            'service_package'  => 'sometimes|required|in:Basic 20Mbps,Standard 50Mbps,Premium 100Mbps,Business 200Mbps',
+            'status'           => 'sometimes|required|in:Active,Suspended,Inactive',
+            'installation_date'=> 'sometimes|required|date',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return back()->withErrors($validator);
         }
 
-        try {
-            $customer->update($request->all());
+        $customer->update($request->all());
 
-            return Inertia::render('customers/CustomerDetails', [
-                'success' => true,
-                'message' => 'Customer updated successfully',
-                'data' => $customer
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update customer',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return back()->with('success', 'Customer updated successfully');
+    }
+
+    
+    public function destroy($id)
+    {
+        $customer = Customer::findOrFail($id);
+        $customer->delete();
+
+        return redirect()->route('customers.list')
+            ->with('success', 'Customer deleted successfully');
     }
 
 

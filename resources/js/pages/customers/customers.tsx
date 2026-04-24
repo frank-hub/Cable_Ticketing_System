@@ -21,7 +21,7 @@ import {
   XCircle,
   Plus
 } from 'lucide-react';
-import { CustomerListTableProps } from '../types';
+import { Customer, CustomerListTableProps } from '../types';
 
 const CustomerListTable: React.FC<CustomerListTableProps> = ({ customers : propCustomers }) => {
   const [searchCustomer, setSearchCustomer] = useState('');
@@ -317,14 +317,10 @@ const filteredCustomers = customersArray.filter((customer: Customer) => {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View Details">
+                          <button
+                          onClick={() => window.location.href = `/customers/${customer.id}`}
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View Details">
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Edit">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
-                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

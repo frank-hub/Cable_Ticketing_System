@@ -56,6 +56,9 @@ Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function 
 
     Route::group(['prefix' => 'customers'], function () {
         Route::get('list',[CustomerController::class, 'index'])->name('customers.list');
+        Route::get('{id}', [CustomerController::class, 'show'])->name('customers.show');
+        Route::put('/update/{customer}', [CustomerController::class, 'update']);
+        Route::delete('/delete/{customer}', [CustomerController::class, 'destroy']);
 
         Route::get('installations', [InstallationController::class, 'index'])->name('customers.installations');
         Route::get('leads', function () {

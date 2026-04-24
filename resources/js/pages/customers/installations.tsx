@@ -27,7 +27,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
   const [showAddModal, setShowAddModal] = useState(false);
 
   const {technicians , data} = usePage().props as any;
-  
+
   const initialTickets = propsInstallations || data?.data || [];
 
   const [installations, setInstallations] = useState(initialTickets);
@@ -155,7 +155,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
         {/* Navigation */}
         <div className="flex items-center gap-4">
           <button
-            onClick={() => window.history.back()}
+            onClick={() => window.location.href = '/dashboard'}
             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-indigo-600 hover:bg-white border border-slate-200 rounded-xl transition-all font-medium group bg-white shadow-sm"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -269,7 +269,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
                         </div>
 
                         <div className="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
-                            <button 
+                            <button
                             onClick={() => window.location.href = `/customers/installation/${inst.idno}`}
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
                                 <Edit className="w-5 h-5" />

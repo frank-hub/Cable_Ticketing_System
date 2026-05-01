@@ -76,7 +76,7 @@ Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function 
 
     });
 
-    // Reassign
+    // Reassign Ticket
     Route::patch('tickets/{ticket_number}/reassign',[TicketController::class,'reassign'])->name('ticket.reassign');
 
 });

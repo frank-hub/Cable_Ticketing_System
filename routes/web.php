@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\SOSController;
+use App\Http\Controllers\InternetPackagesController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -19,6 +21,9 @@ Route::middleware(['auth', 'role:Admin,Manager'])->group(function () {
         Route::get('/dashboard/sla',         [DashboardController::class, 'sla']);
         Route::get('/dashboard/performance', [DashboardController::class, 'performance']);
         Route::get('/dashboard/insights',    [DashboardController::class, 'insights']);
+
+        Route::get('/sos',  [SosController::class, 'index'])->name('sos.index');
+        Route::post('/sos', [SosController::class, 'store'])->name('sos.store');
 
         Route::group(['prefix' => 'settings'], function () {
         Route::get('users', [UserController::class, 'index'])->name('settings.users');
@@ -54,6 +59,12 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:Admin,Manager,Support Agent'])->group(function () {
+
+    Route::get('/packages',                    [InternetPackagesController::class, 'index'])  ->name('packages.index');
+    Route::post('/packages',                   [InternetPackagesController::class, 'store'])  ->name('packages.store');
+    Route::patch('/packages/{package}',        [InternetPackagesController::class, 'update']) ->name('packages.update');
+    Route::patch('/packages/{package}/toggle', [InternetPackagesController::class, 'toggle']) ->name('packages.toggle');
+    Route::delete('/packages/{package}',       [InternetPackagesController::class, 'destroy'])->name('packages.destroy');
 
     Route::group(['prefix' => 'customers'], function () {
         Route::get('list',[CustomerController::class, 'index'])->name('customers.list');

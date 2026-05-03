@@ -10,6 +10,7 @@ import {
   User,
   XCircle,
   LogOut,
+  Package,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -120,8 +121,10 @@ const menuItems = [
     id: 'support', label: 'Customer Support', icon: MessageSquare, path: '/support',
     subItems: [
       { id: 'tickets', label: 'Tickets', path: '/support/tickets' },
+      { id: 'sos', label: 'SOS', path: '/sos' },
     ],
   },
+  { id: 'packages', label: 'Packages', icon: Package, path: '/packages' },
   {
     id: 'analytics', label: 'Analytics & Reports', icon: BarChart3, path: '/analytics',
     subItems: [
@@ -182,7 +185,7 @@ function Sidebar() {
   };
 
     const {auth} = usePage().props as any;
-  
+
   return (
     <aside className="w-64 bg-slate-900 min-h-screen flex flex-col border-r border-slate-800 shrink-0">
       <div className="p-5 flex items-center gap-3 border-b border-slate-800">
@@ -313,8 +316,8 @@ const Dashboard: React.FC<{ tickets: any[] }> = ({ tickets: propTickets }) => {
         </div>
             </div>
             <div className="flex items-center gap-3">
-              
-              <button 
+
+              <button
                 onClick={() => router.post('/logout')}
                 className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
                 <LogOut className="w-5 h-5 text-slate-600" />
@@ -434,62 +437,6 @@ const Dashboard: React.FC<{ tickets: any[] }> = ({ tickets: propTickets }) => {
               iconBg="bg-rose-50"
               iconColor="text-rose-600"
             />
-          </div>
-
-          {/* ── Charts Row ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            {/* Revenue area chart */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-base font-bold text-slate-800">Revenue Analytics</h2>
-                <span className="text-xs text-slate-400">Last 7 days</span>
-              </div>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chart_data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                    <defs>
-                      <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}    />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={8} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '10px', color: '#fff', fontSize: 13 }}
-                      itemStyle={{ color: '#c7d2fe' }}
-                      formatter={(v: number) => [`KES ${v.toLocaleString()}`, 'Revenue']}
-                    />
-                    <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5}
-                      fillOpacity={1} fill="url(#gradRevenue)" dot={false} activeDot={{ r: 5, fill: '#6366f1' }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Ticket volume bar chart */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-base font-bold text-slate-800">Ticket Volume</h2>
-                <span className="text-xs text-slate-400">Last 7 days</span>
-              </div>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chart_data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={8} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                    <Tooltip
-                      cursor={{ fill: '#f8fafc' }}
-                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '10px', color: '#fff', fontSize: 13 }}
-                      formatter={(v: number) => [v, 'Tickets']}
-                    />
-                    <Bar dataKey="tickets" fill="#6366f1" radius={[5, 5, 0, 0]} maxBarSize={40} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
           </div>
 
           {/* ── Breakdowns Row ── */}

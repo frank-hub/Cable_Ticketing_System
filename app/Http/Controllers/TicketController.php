@@ -46,11 +46,9 @@ class TicketController extends Controller
                 'error' => $response->body()
             ]);
 
-            Log::info('SMS Error '.$response->body());
-
         }
 
-                    Log::info('SMS Error '.$response->body());
+
 
     }
 
@@ -212,8 +210,13 @@ class TicketController extends Controller
             return Inertia::render('support/tickets', [
                 'success' => true,
                 'message' => 'Ticket created successfully',
-                'data'    => $ticket->load(['customer', 'notes'])
-            ], 201);
+                'data'    => $ticket->load(['customer', 'notes']),
+                'flash'   => [
+                'success' => session('success'),
+                'error'   => session('error'),
+            ],
+
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -387,7 +390,7 @@ class TicketController extends Controller
 
     public function escalate(Request $request, Ticket $ticket , $ticket_number = null)
     {
-        
+
         $validator = Validator::make($request->all(), [
             'escalation_level' => 'required|in:Level 1,Level 2,Level 3',
             'reason'           => 'required|string',
@@ -408,7 +411,7 @@ class TicketController extends Controller
                 true,
                 Auth::id()
             );
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Ticket escalated successfully',
@@ -837,7 +840,7 @@ class TicketController extends Controller
         }
 
         $ticket = Ticket::where('id', $ticket_number)->firstOrFail();
-        
+
         try {
             $ticket->update([
                 'assigned_to'      => $request->assigned_to,

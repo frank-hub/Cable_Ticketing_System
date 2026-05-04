@@ -24,6 +24,7 @@ Route::middleware(['auth', 'role:Admin,Manager'])->group(function () {
 
         Route::get('/sos',  [SosController::class, 'index'])->name('sos.index');
         Route::post('/sos', [SosController::class, 'store'])->name('sos.store');
+        Route::post('/sos/{id}/resolve', [SosController::class, 'resolve'])->name('sos.resolve');
 
         Route::group(['prefix' => 'settings'], function () {
         Route::get('users', [UserController::class, 'index'])->name('settings.users');

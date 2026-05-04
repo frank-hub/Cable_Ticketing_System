@@ -6,6 +6,16 @@ import {
   Edit, Save, X, Flag, Zap, Mail, Phone
 } from 'lucide-react';
 
+function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
+    return (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
+            ${type === 'success' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white'}`}>
+            {type === 'success' ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+            {message}
+        </div>
+    );
+}
+
 interface TicketNote {
   id: number;
   note: string;
@@ -286,8 +296,14 @@ const TicketDetailsPage = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   const responseSLA   = calculateSLAStatus('response');
   const resolutionSLA = calculateSLAStatus('resolution');
-
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    function showToast(message: string, type: 'success' | 'error' = 'success') {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    }
+    
   return (
+
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
 
@@ -860,6 +876,7 @@ const TicketDetailsPage = () => {
           </div>
         </div>
       )}
+      {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
 };

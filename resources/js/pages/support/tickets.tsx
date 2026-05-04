@@ -26,8 +26,23 @@ import {
 } from 'lucide-react';
 import { SupportTicketListProps, NewTicketData, Priority, Category, TicketType, EscalationLevel } from '../types';
 
+function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
+    return (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
+            ${type === 'success' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white'}`}>
+            {type === 'success' ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+            {message}
+        </div>
+    );
+}
+
 const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTickets, onBack }) => {
 
+      const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    function showToast(message: string, type: 'success' | 'error' = 'success') {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    }
 
   const {data} = usePage<PageProps>().props;
   const {flash , errors} = usePage().props as any;
@@ -128,10 +143,10 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
     try {
         const response = await axios.post('/api/support/ticket', newTicket);
 
-        alert(`Ticket ${response.data.ticketId} created successfully`);
+        showToast(`Ticket ${response.data.ticketId} created successfully`, 'success');
     }catch(error: any) {
         console.error('Error creating ticket',error.response);
-        alert(`Failed to create ticket: ${error.response?.data?.message || 'Unknown error'}`);
+        showToast(`Failed to create ticket: ${error.response?.data?.message || 'Unknown error'}`, 'error');
     }
 
     const createdTicket = {
@@ -174,11 +189,11 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
       });
         }catch(error) {
             console.error('Error deleting ticket',error);
-            alert('Failed to delete ticket');
+            showToast('Failed to delete ticket', 'error');
         }
 
 
-        alert(`Ticket ${ticket_number} deleted successfully`);
+        showToast(`Ticket ${ticket_number} deleted successfully`, 'success');
     };
 
     const handleDeleteTicket = async (ticket_number: string) => {
@@ -196,14 +211,14 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
             if (response.ok) {
                 setTickets(tickets.filter(t => t.ticket_number !== ticket_number));
-                alert(`Ticket ${ticket_number} deleted successfully`);
+                showToast(`Ticket ${ticket_number} deleted successfully`, 'success');
             } else {
                 const data = await response.json();
-                alert(`Failed to delete ticket: ${data?.message || 'Unknown error'}`);
+                showToast(`Failed to delete ticket: ${data?.message || 'Unknown error'}`, 'error');
             }
         } catch (error) {
             console.error('Error deleting ticket', error);
-            alert('Failed to delete ticket: Unknown error');
+            showToast('Failed to delete ticket', 'error');
         }
     };
 
@@ -761,6 +776,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
           </div>
         </div>
       )}
+             {toast && <Toast message={toast.message} type={toast.type} />}
+
     </div>
   );
 };

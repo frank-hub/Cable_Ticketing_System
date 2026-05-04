@@ -197,10 +197,7 @@ class InstallationController extends Controller
                 "Installation {$installation->installation_number} has been assigned to you. Details:Customer: {$installation->customer_name},{$installation->contact_number}, Status: {$installation->status}. Please address it ASAP thank you.");
 
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Installation created successfully',
-            ], 201);
+            return back()->with('success', 'Installation created successfully');
 
         } catch (\Exception $e) {
             return response()->json([

@@ -20,8 +20,23 @@ import {
 } from 'lucide-react';
 import { InstallationsListProps, Installation, InstallationStatus } from '../types';
 
+function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
+    return (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
+            ${type === 'success' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white'}`}>
+            {type === 'success' ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+            {message}
+        </div>
+    );
+}
+
 const InstallationsList: React.FC<InstallationsListProps> = ({ installations: propsInstallations, onBack }) => {
 
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    function showToast(message: string, type: 'success' | 'error' = 'success') {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    }
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -107,7 +122,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
                 status: 'Pending',
                 notes: ''
             });
-            alert('Installation added successfully.');
+            showToast('Installation added successfully.', 'success');
         },
         onError: (errors) => {
             console.error('Validation errors:', errors);
@@ -395,6 +410,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
           </div>
         </div>
       )}
+       {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
 };

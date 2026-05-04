@@ -314,17 +314,9 @@ class TicketController extends Controller
         try {
             $ticket->update($request->all());
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ticket updated successfully',
-                'data'    => $ticket->fresh(['customer', 'assignedUser', 'notes'])
-            ]);
+            return redirect()->back()->with('success', 'Ticket updated successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update ticket',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to update ticket: ' . $e->getMessage());
         }
     }
 
@@ -345,10 +337,7 @@ class TicketController extends Controller
                 'user_id'   => Auth::id(),
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Note added successfully',
-            ]);
+            return redirect()->back()->with('success', 'Note added successfully');
 
         }
 
@@ -369,17 +358,9 @@ class TicketController extends Controller
                 Auth::id()
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Note added successfully',
-                'data'    => $note
-            ]);
+            return redirect()->back()->with('success', 'Note added successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to add note',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to add note: ' . $e->getMessage());
         }
     }
 
@@ -392,10 +373,7 @@ class TicketController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors'  => $validator->errors()
-            ], 422);
+            return redirect()->back()->with('error', 'Validation failed: ' . implode(', ', $validator->errors()->all()));
         }
 
         try {
@@ -407,17 +385,9 @@ class TicketController extends Controller
                 Auth::id()
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ticket escalated successfully',
-                'data'    => $ticket->fresh()
-            ]);
+            return redirect()->back()->with('success', 'Ticket escalated successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to escalate ticket',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to escalate ticket: ' . $e->getMessage());
         }
     }
 
@@ -436,10 +406,7 @@ class TicketController extends Controller
     public function startWorking(Ticket $ticket)
     {
         if ($ticket->started_at) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Work has already been started on this ticket.',
-            ], 422);
+            return redirect()->back()->with('error', 'Work has already been started on this ticket.');
         }
 
         try {
@@ -460,17 +427,9 @@ class TicketController extends Controller
                 Auth::id()
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Work started successfully.',
-                'data'    => $ticket->fresh(),
-            ]);
+            return redirect()->back()->with('success', 'Work started successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to start working.',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to start work: ' . $e->getMessage());
         }
     }
 
@@ -485,17 +444,11 @@ class TicketController extends Controller
     public function putOnHold(Ticket $ticket)
     {
         if ($ticket->status === 'On Hold') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ticket is already on hold.',
-            ], 422);
+            return redirect()->back()->with('error', 'Ticket is already on hold.');
         }
 
         if (!$ticket->started_at) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ticket must be started before it can be put on hold.',
-            ], 422);
+            return redirect()->back()->with('error', 'Ticket must be started before it can be put on hold.');
         }
 
         try {
@@ -511,17 +464,10 @@ class TicketController extends Controller
                 Auth::id()
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ticket is now on hold.',
-                'data'    => $ticket->fresh(),
-            ]);
+            return redirect()->back()->with('success', 'Ticket is now on hold.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to put ticket on hold.',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to put ticket on hold: ' . $e->getMessage());
+
         }
     }
 
@@ -537,10 +483,7 @@ class TicketController extends Controller
     {
 
         if ($ticket->status !== 'On Hold' || !$ticket->paused_at) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ticket is not currently on hold.',
-            ], 422);
+            return redirect()->back()->with('error', 'Ticket is not currently on hold.');
         }
 
         try {
@@ -560,17 +503,9 @@ class TicketController extends Controller
                 Auth::id()
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ticket resumed successfully.',
-                'data'    => $ticket->fresh(),
-            ]);
+            return redirect()->back()->with('success', 'Ticket resumed successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to resume ticket.',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to resume ticket: ' . $e->getMessage());
         }
     }
 
@@ -590,17 +525,11 @@ class TicketController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors'  => $validator->errors()
-            ], 422);
+            return redirect()->back()->with('error', 'Please fill in all required fields.');
         }
 
         if (!$ticket->started_at) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ticket must be started before it can be resolved.',
-            ], 422);
+            return redirect()->back()->with('error', 'Ticket must be started before it can be resolved.');
         }
 
         try {
@@ -633,17 +562,9 @@ class TicketController extends Controller
 
             $this->sendSms($ticket->phone, "Your ticket {$ticket->ticket_number} has been resolved. Thank you for choosing us.");
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ticket resolved successfully.',
-                'data'    => $ticket->fresh(),
-            ]);
+            return redirect()->back()->with('success', 'Ticket resolved successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to resolve ticket.',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to resolve ticket: ' . $e->getMessage());
         }
     }
 
@@ -656,10 +577,7 @@ class TicketController extends Controller
     public function close(Ticket $ticket)
     {
         if ($ticket->status !== 'Resolved') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only resolved tickets can be closed.',
-            ], 422);
+            return redirect()->back()->with('error', 'Only resolved tickets can be closed.');
         }
 
         try {
@@ -675,17 +593,9 @@ class TicketController extends Controller
                 Auth::id()
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ticket closed successfully.',
-                'data'    => $ticket->fresh(),
-            ]);
+            return redirect()->back()->with('success', 'Ticket closed successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to close ticket.',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to close ticket: ' . $e->getMessage());
         }
     }
 
@@ -701,10 +611,7 @@ class TicketController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors'  => $validator->errors()
-            ], 422);
+            return redirect()->back()->with('error', 'Please fill in all required fields.');
         }
 
         try {
@@ -722,17 +629,9 @@ class TicketController extends Controller
                     $ticket->update(['status' => $request->status]);
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ticket status updated successfully',
-                'data'    => $ticket->fresh()
-            ]);
+            return redirect()->back()->with('success', 'Ticket status updated successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update status',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to update status: ' . $e->getMessage());
         }
     }
 
@@ -811,7 +710,7 @@ class TicketController extends Controller
         $ticket = Ticket::where('ticket_number', $ticket_number)->firstOrFail();
         try {
             $ticket->delete();
-            return response()->json(['success' => true, 'message' => 'Ticket deleted successfully']);
+            return redirect()->back()->with('success', 'Ticket deleted successfully');
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -842,13 +741,9 @@ class TicketController extends Controller
                 'assigned_user_id' => User::where('name', $request->assigned_to)->value('id'),
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Ticket reassigned successfully']);
+            return redirect()->back()->with('success', 'Ticket reassigned successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to reassign ticket',
-                'error'   => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Failed to reassign ticket: ' . $e->getMessage());
         }
     }
 

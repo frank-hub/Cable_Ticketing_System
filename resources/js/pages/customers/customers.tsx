@@ -23,11 +23,19 @@ import {
 } from 'lucide-react';
 import { Customer, CustomerListTableProps } from '../types';
 
+interface InternetPackage {
+  id: number;
+  name: string;
+  speed: string;
+  price: string;
+}
 const CustomerListTable: React.FC<CustomerListTableProps> = ({ customers : propCustomers }) => {
   const [searchCustomer, setSearchCustomer] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const { data } = usePage<PageProps>().props;
+  const { data  } = usePage<PageProps>().props;
+  const internetPackages = usePage().props.internetPackages as InternetPackage[];
+  console.log('Received internet packages:', internetPackages);
   const initialCustomers = propCustomers || data?.data || [];
   const [customers, setCustomers] = useState(initialCustomers);
   const [newCustomer, setNewCustomer] = useState({
@@ -35,7 +43,7 @@ const CustomerListTable: React.FC<CustomerListTableProps> = ({ customers : propC
     account_number: '',
     primary_phone: '254',
     email_address: '',
-    service_package: 'Standard 50Mbps',
+    service_package: '',
     status: 'Active',
     installation_date: new Date().toISOString().slice(0, 10),
   });
@@ -81,7 +89,7 @@ const filteredCustomers = customersArray.filter((customer: Customer) => {
   };
 
   const handleAddCustomer = async() => {
-    if (!newCustomer.customer_name || !newCustomer.account_number || !newCustomer.primary_phone) {
+    if (!newCustomer.customer_name || !newCustomer.account_number || !newCustomer.primary_phone || !newCustomer.service_package) {
       alert('Please fill in required fields');
       return;
     }
@@ -106,7 +114,7 @@ const filteredCustomers = customersArray.filter((customer: Customer) => {
       account_number: '',
       primary_phone: '',
       email_address: '',
-      service_package: 'Standard 50Mbps',
+      service_package: '',
       status: 'Active',
       installation_date: new Date().toISOString().slice(0, 10),
     });
@@ -444,14 +452,16 @@ const filteredCustomers = customersArray.filter((customer: Customer) => {
                       Service Package
                     </label>
                     <select
-                      value={newCustomer.service_package}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, service_package: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
+                        value={newCustomer.service_package}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, service_package: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm bg-white"
                     >
-                      <option value="Basic 20Mbps">Basic 20Mbps</option>
-                      <option value="Standard 50Mbps">Standard 50Mbps</option>
-                      <option value="Premium 100Mbps">Premium 100Mbps</option>
-                      <option value="Business 200Mbps">Business 200Mbps</option>
+                        <option value="">Select a package</option>
+                        {(internetPackages ?? []).map((pkg) => (
+                            <option key={pkg.id} value={pkg.name}>
+                                {pkg.name} — {pkg.speed} Mbps — KES {Number(pkg.price).toLocaleString()}
+                            </option>
+                        ))}
                     </select>
                   </div>
                   <div>

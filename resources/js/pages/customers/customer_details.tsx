@@ -30,9 +30,17 @@ interface Customer {
     installation_date?: string;
     tickets?: TicketItem[];
 }
+interface InternetPackage {
+    id: number;
+    name: string;
+    speed: string;
+    price: number;
+    is_active: boolean;
+}
 
 interface Props {
     customer: Customer;
+    internetPackages: InternetPackage[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -119,7 +127,7 @@ type Tab = 'details' | 'tickets';
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function CustomerDetail({ customer }: Props) {
+export default function CustomerDetail({ customer, internetPackages }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>('details');
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -156,7 +164,7 @@ export default function CustomerDetail({ customer }: Props) {
 
     function handleDelete() {
         alert('This will permanently delete the customer and all associated tickets. This action cannot be undone.');
-        
+
         if (!confirm(`Delete customer ${customer.account_number}? This cannot be undone.`)) return;
         router.delete(`/customers/delete/${customer.id}`, {
             onSuccess: () => router.visit('/customers'),
@@ -305,14 +313,22 @@ export default function CustomerDetail({ customer }: Props) {
                         <SectionCard title="Service details" icon={<Package size={14} />}>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <Field label="Service package">
-                                    <select className={selectCls} value={form.service_package} onChange={set('service_package')}>
-                                        {['Basic 20Mbps', 'Standard 50Mbps', 'Premium 100Mbps', 'Business 200Mbps'].map(p => (
-                                            <option key={p}>{p}</option>
+                                    <select
+                                        className={selectCls}
+                                        value={form.service_package}  // ← this should be "Home 1"
+                                        onChange={set('service_package')}
+                                    >
+                                        <option value="">Select a package</option>
+                                        {internetPackages.map(pkg => (
+                                            <option key={pkg.id} value={pkg.name}>  {/* ← value must exactly match */}
+                                                {pkg.name} - {pkg.speed} Mbps at Ksh {Number(pkg.price).toLocaleString()}/month
+                                            </option>
                                         ))}
                                     </select>
                                 </Field>
                                 <Field label="Status">
                                     <select className={selectCls} value={form.status} onChange={set('status')}>
+                                        <option value="">Select status</option>
                                         {['Active', 'Suspended', 'Inactive'].map(s => (
                                             <option key={s}>{s}</option>
                                         ))}

@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Customer;
+use Faker\Provider\Internet;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
+use App\Models\InternetPackages;
 
 class CustomerController extends Controller
 {
     public function index(Request $request)
     {
         $query = Customer::query();
+        $internetPackages = InternetPackages::where('is_active', true)->get();
 
         // Search
         if ($request->has('search')) {
@@ -47,6 +50,7 @@ class CustomerController extends Controller
         return Inertia::render('customers/customers', [
             'success' => true,
             'data' => $customers,
+            'internetPackages' => $internetPackages,
             'stats' => [
                 'total' => Customer::count(),
                 // 'active' => Customer::active()->count(),
@@ -70,8 +74,6 @@ class CustomerController extends Controller
             'status' => 'required',
             'installation_date' => 'required',
         ]);
-
-        // dd($request->installation_date);
 
 
         if ($validator->fails()) {
@@ -102,9 +104,12 @@ class CustomerController extends Controller
     public function show($id)
     {
         $customer = Customer::with('tickets')->findOrFail($id);
+        $internetPackages = InternetPackages::where('is_active', true)->get();
+
 
         return Inertia::render('customers/customer_details', [
             'customer' => $customer,
+            'internetPackages' => $internetPackages,
         ]);
     }
 
@@ -118,7 +123,7 @@ class CustomerController extends Controller
             'primary_phone'    => 'sometimes|required|string|max:20',
             'email_address'    => 'sometimes|nullable|email|max:255',
             'physical_address' => 'sometimes|nullable|string',
-            'service_package'  => 'sometimes|required|in:Basic 20Mbps,Standard 50Mbps,Premium 100Mbps,Business 200Mbps',
+            'service_package'  => 'sometimes|required',
             'status'           => 'sometimes|required|in:Active,Suspended,Inactive',
             'installation_date'=> 'sometimes|required|date',
         ]);
@@ -132,7 +137,7 @@ class CustomerController extends Controller
         return back()->with('success', 'Customer updated successfully');
     }
 
-    
+
     public function destroy($id)
     {
         $customer = Customer::findOrFail($id);

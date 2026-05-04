@@ -18,12 +18,7 @@ return new class extends Migration
             $table->string('primary_phone');
             $table->string('email_address')->nullable();
             $table->text('physical_address')->nullable();
-            $table->enum('service_package', [
-                'Basic 20Mbps',
-                'Standard 50Mbps',
-                'Premium 100Mbps',
-                'Business 200Mbps'
-            ])->default('Standard 50Mbps');
+            $table->string('service_package')->default('Standard 50Mbps');
             $table->enum('status', ['Active', 'Suspended', 'Inactive'])->default('Active');
             $table->date('installation_date');
             $table->timestamps();

@@ -59,6 +59,9 @@ const TicketDetailsPage = () => {
   const ticket = usePage().props.data as TicketDetails;
   const technicians =(usePage().props.technicians as Technician[]) ?? [];
 
+  const {flash} = usePage().props as any;
+  console.log('Page Props:', flash);
+
   // ── UI-only state (no data mutation here anymore) ──────────────────────────
   const [isEditing, setIsEditing]                   = useState(false);
   const [newNote, setNewNote]                       = useState('');
@@ -302,6 +305,17 @@ const TicketDetailsPage = () => {
             <span>/ Support / Tickets / {ticket.ticket_number}</span>
           </div>
         </div>
+
+        {flash?.success && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl">
+            {flash.success}
+          </div>
+        )}
+        {flash?.error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl">
+            {flash.error}
+          </div>
+        )}
 
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">

@@ -30,7 +30,7 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
 
 
   const {data} = usePage<PageProps>().props;
-  const {flash} = usePage().props as any;
+  const {flash , errors} = usePage().props as any;
   console.log('Page Props:', flash);
   const {customers,users ,auth} = usePage().props as any;
   const initialTickets = propTickets || data?.data || [];
@@ -253,12 +253,14 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
             {flash.success}
           </div>
         )}
-        
+
         {flash?.error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl">
             {flash.error}
             </div>
         )}
+
+        {errors.customer_name && <p className="text-red-500">{errors.customer_name}</p>}
 
         {/* Header */}
         <div className="flex justify-between items-start">

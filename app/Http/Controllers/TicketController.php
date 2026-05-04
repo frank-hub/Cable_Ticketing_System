@@ -102,7 +102,7 @@ class TicketController extends Controller
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->get('per_page', 50);
         $tickets = $query->paginate($perPage);
 
         // ── Stats: scoped to own tickets for Technician ────────────────────
@@ -121,6 +121,7 @@ class TicketController extends Controller
             ->get();
 
 
+
         return Inertia::render('support/tickets', [
             'success'   => true,
             'data'      => $tickets,
@@ -132,13 +133,18 @@ class TicketController extends Controller
                 'in_progress' => $statsQuery->clone()->inProgress()->count(),
                 'resolved'    => $statsQuery->clone()->resolved()->count(),
                 'critical'    => $statsQuery->clone()->critical()->count(),
-            ]
+            ],
+            'flash'   => [
+                'success' => session('success'),
+                'error'   => session('error'),
+            ],
         ]);
     }
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        // Use Inertia-compatible validation — automatically redirects back with errors
+        $validated = $request->validate([
             'customer_name'    => 'required|string|max:255',
             'account_number'   => 'required|string|max:50',
             'phone'            => 'required|string|max:20',
@@ -153,41 +159,35 @@ class TicketController extends Controller
             'customer_id'      => 'nullable|exists:customers,id',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors'  => $validator->errors()
-            ], 422);
-        }
-
         try {
             DB::beginTransaction();
 
             if (!$request->customer_id) {
                 $customer = Customer::where('account_number', $request->account_number)->first();
-                $request->merge(['customer_id' => $customer?->id]);
+                $validated['customer_id'] = $customer?->id;
             }
 
             $ticket = Ticket::create([
                 'ticket_number'    => Ticket::generateTicketNumber(),
-                'customer_id'      => $request->customer_id,
-                'customer_name'    => $request->customer_name,
-                'account_number'   => $request->account_number,
-                'phone'            => $request->phone,
-                'email'            => $request->email,
-                'subject'          => $request->subject,
-                'ticket_type'      => $request->ticket_type,
-                'escalation_level' => $request->escalation_level,
-                'priority'         => $request->priority,
-                'category'         => $request->category,
-                'description'      => $request->description,
-                'assigned_to'      => $request->assigned_to,
-                'assigned_user_id' => $request->assigned_to ? User::where('name', $request->assigned_to)->value('id') : null,
+                'customer_id'      => $validated['customer_id'] ?? null,
+                'customer_name'    => $validated['customer_name'],
+                'account_number'   => $validated['account_number'],
+                'phone'            => $validated['phone'],
+                'email'            => $validated['email'] ?? null,
+                'subject'          => $validated['subject'],
+                'ticket_type'      => $validated['ticket_type'],
+                'escalation_level' => $validated['escalation_level'],
+                'priority'         => $validated['priority'],
+                'category'         => $validated['category'],
+                'description'      => $validated['description'],
+                'assigned_to'      => $validated['assigned_to'] ?? null,
+                'assigned_user_id' => isset($validated['assigned_to'])
+                    ? User::where('name', $validated['assigned_to'])->value('id')
+                    : null,
                 'status'           => 'Open',
             ]);
 
-            if ($request->has('initial_note')) {
+            if ($request->filled('initial_note')) {
                 $ticket->addNote(
                     $request->initial_note,
                     Auth::user()?->name ?? 'System',
@@ -198,32 +198,27 @@ class TicketController extends Controller
 
             DB::commit();
 
-            $user = User::where('id', $ticket->assigned_user_id)->first();
+            $user = User::find($ticket->assigned_user_id);
 
-            // SMS notification to the customer
-            $this->sendSms($ticket->phone, "Dear {$ticket->customer_name},your query has been raised under {$ticket->ticket_number}  and assigned to technician {$user->name} for resolution. For further information kindly call 0207905050 toll free.");
+            if ($user) {
+                $this->sendSms(
+                    $ticket->phone,
+                    "Dear {$ticket->customer_name}, your query has been raised under {$ticket->ticket_number} and assigned to technician {$user->name} for resolution. For further information kindly call 0207905050 toll free."
+                );
 
-            // SMS notification to the assigned technician
-            $this->sendSms($user->phone, "Ticket {$ticket->ticket_number} has been assigned to you. Details:Customer: {$ticket->customer_name},{$ticket->phone}, Priority: {$ticket->ticket_type}. Please address it ASAP thank you.");
+                $this->sendSms(
+                    $user->phone,
+                    "Ticket {$ticket->ticket_number} has been assigned to you. Details: Customer: {$ticket->customer_name}, {$ticket->phone}, Priority: {$ticket->priority}. Please address it ASAP thank you."
+                );
+            }
 
+            return redirect()->route('support.tickets')->with('success', 'Ticket created successfully');
 
-            return Inertia::render('support/tickets', [
-                'success' => true,
-                'message' => 'Ticket created successfully',
-                'data'    => $ticket->load(['customer', 'notes']),
-                'flash'   => [
-                'success' => session('success'),
-                'error'   => session('error'),
-            ],
-
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create ticket',
-                'error'   => $e->getMessage()
-            ], 500);
+
+            // Inertia-compatible error — redirects back with a general error message
+            return redirect()->back()->with('error', 'Failed to create ticket: ' . $e->getMessage());
         }
     }
 

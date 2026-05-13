@@ -192,7 +192,7 @@ function Sidebar() {
         <div className="bg-indigo-600 p-2 rounded-lg">
           <Hexagon className="text-white fill-current" size={22} />
         </div>
-        <span className="text-white text-lg font-bold tracking-tight">Cable One</span>
+        <span className="text-white text-lg font-bold tracking-tight">CON Ticket System</span>
       </div>
 
       <nav className="flex-1 px-3 py-5 overflow-y-auto space-y-0.5">

@@ -5,6 +5,7 @@ import {
     CheckCircle, XCircle, Zap, Building2, HomeIcon,
     ToggleLeft, ToggleRight, Search
 } from 'lucide-react';
+import QuickNav from '../QuickNav';
 
 interface Package {
     id: number;
@@ -458,6 +459,7 @@ const PackagesPage = () => {
                     </div>
                 </div>
             )}
+            <QuickNav />
         </div>
     );
 };

@@ -5,6 +5,7 @@ import {
     Send, Clock, CheckCircle, XCircle, ArrowLeft, Home,
     Siren, CheckCheck
 } from 'lucide-react';
+import QuickNav from '../QuickNav';
 
 interface SosHistory {
     id: number;
@@ -342,6 +343,7 @@ const SosPage = () => {
                     )}
                 </div>
             </div>
+            <QuickNav />
         </div>
     );
 };

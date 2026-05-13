@@ -6,6 +6,7 @@ import {
     AlertCircle, Clock, XCircle, Ticket, Activity,
     ToggleLeft, ToggleRight, Hash
 } from 'lucide-react';
+import QuickNav from '../QuickNav';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -383,6 +384,7 @@ export default function CustomerDetail({ customer, internetPackages }: Props) {
             </div>
 
             {toast && <Toast message={toast.message} type={toast.type} />}
+            <QuickNav />
         </div>
     );
 }

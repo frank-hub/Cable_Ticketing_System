@@ -6,6 +6,7 @@ import {
   CheckCircle, XCircle, Edit2, UserPlus, Trash2
 } from 'lucide-react';
 import { UserRolesProps, SystemUser, UserRole, UserStatus } from '../types';
+import QuickNav from '../QuickNav';
 
 const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
   const [searchQuery, setSearchQuery]     = useState('');
@@ -429,6 +430,7 @@ const UserRoles: React.FC<UserRolesProps> = ({ onBack }) => {
           </div>
         </div>
       )}
+      <QuickNav />
     </div>
   );
 };

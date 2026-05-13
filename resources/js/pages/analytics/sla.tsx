@@ -10,6 +10,7 @@ import {
   RadialBarChart, RadialBar, ResponsiveContainer,
   Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
 } from 'recharts';
+import QuickNav from '../QuickNav';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -432,6 +433,7 @@ export default function SlaReport() {
           </div>
         </div>
       </div>
+      <QuickNav />
     </div>
   );
 }

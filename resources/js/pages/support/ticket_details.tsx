@@ -5,6 +5,7 @@ import {
   FileText, TrendingUp, AlertTriangle, Send, History, Star, XCircle,
   Edit, Save, X, Flag, Zap, Mail, Phone
 } from 'lucide-react';
+import QuickNav from '../QuickNav';
 
 function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
     return (
@@ -301,7 +302,7 @@ const TicketDetailsPage = () => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
     }
-    
+
   return (
 
     <div className="min-h-screen bg-slate-50 p-6">
@@ -877,6 +878,8 @@ const TicketDetailsPage = () => {
         </div>
       )}
       {toast && <Toast message={toast.message} type={toast.type} />}
+
+      <QuickNav />
     </div>
   );
 };

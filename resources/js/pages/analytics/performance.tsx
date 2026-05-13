@@ -12,6 +12,7 @@ import {
   LineChart, Line,
   Cell,
 } from 'recharts';
+import QuickNav from '../QuickNav';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -433,6 +434,7 @@ export default function Performance() {
           </div>
         </div>
       </div>
+      <QuickNav />
     </div>
   );
 }

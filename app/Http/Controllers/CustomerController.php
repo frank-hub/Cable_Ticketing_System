@@ -44,7 +44,7 @@ class CustomerController extends Controller
         $query->orderBy($sortBy, $sortOrder);
 
         // Pagination
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->get('per_page', 1000); // default to 1000 for now since pagination is not implemented in the frontend
         $customers = $query->paginate($perPage);
 
         return Inertia::render('customers/customers', [

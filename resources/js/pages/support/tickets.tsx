@@ -25,6 +25,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { SupportTicketListProps, NewTicketData, Priority, Category, TicketType, EscalationLevel } from '../types';
+import QuickNav from '../QuickNav';
 
 function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
     return (
@@ -777,6 +778,8 @@ const SupportTicketList: React.FC<SupportTicketListProps> = ({ tickets: propTick
         </div>
       )}
              {toast && <Toast message={toast.message} type={toast.type} />}
+
+             <QuickNav />
 
     </div>
   );

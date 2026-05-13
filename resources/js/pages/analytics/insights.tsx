@@ -10,6 +10,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Treemap,
 } from 'recharts';
+import QuickNav from '../QuickNav';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -502,6 +503,7 @@ export default function Insights() {
           ))}
         </div>
       </div>
+      <QuickNav />
     </div>
   );
 }

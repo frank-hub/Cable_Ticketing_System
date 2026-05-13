@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import QuickNav from '../QuickNav';
 
 import axios from 'axios'
 import {
@@ -511,6 +512,7 @@ const filteredCustomers = customersArray.filter((customer: Customer) => {
           </div>
         </div>
       )}
+        <QuickNav />
     </div>
   );
 };

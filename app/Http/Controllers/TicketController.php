@@ -102,7 +102,7 @@ class TicketController extends Controller
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 50);
+        $perPage = $request->get('per_page', 1000); // default to 1000 for now since pagination is not implemented in the frontend
         $tickets = $query->paginate($perPage);
 
         // ── Stats: scoped to own tickets for Technician ────────────────────

@@ -114,7 +114,7 @@ const menuItems = [
     subItems: [
       { id: 'customer-list',  label: 'Customer List',  path: '/customers/list' },
       { id: 'installations',  label: 'Installations',  path: '/customers/installations' },
-      { id: 'leads',          label: 'Leads',          path: '/customers/leads' },
+    //   { id: 'leads',          label: 'Leads',          path: '/customers/leads' },
     ],
   },
   {
@@ -137,7 +137,7 @@ const menuItems = [
     id: 'settings', label: 'Settings', icon: Settings, path: '/settings',
     subItems: [
       { id: 'users',      label: 'Users & Roles',     path: '/settings/users' },
-      { id: 'system',     label: 'System Settings',   path: '/settings/system' },
+    //   { id: 'system',     label: 'System Settings',   path: '/settings/system' },
     ],
   },
 ];

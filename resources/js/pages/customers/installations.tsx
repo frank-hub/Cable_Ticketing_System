@@ -19,6 +19,7 @@ import {
   Edit
 } from 'lucide-react';
 import { InstallationsListProps, Installation, InstallationStatus } from '../types';
+import QuickNav from '../QuickNav';
 
 function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
     return (
@@ -411,6 +412,7 @@ const InstallationsList: React.FC<InstallationsListProps> = ({ installations: pr
         </div>
       )}
        {toast && <Toast message={toast.message} type={toast.type} />}
+       <QuickNav />
     </div>
   );
 };

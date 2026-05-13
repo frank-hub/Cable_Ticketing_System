@@ -5,6 +5,7 @@ import {
     ClipboardList, Clock, ChevronLeft, Trash2, Save,
     AlertCircle, CheckCircle, XCircle, Loader2
 } from 'lucide-react';
+import QuickNav from '../QuickNav';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -441,6 +442,9 @@ export default function InstallationDetail({ installation, technicians }: Props)
 
             {/* Toast */}
             {toast && <Toast message={toast.message} type={toast.type} />}
+
+                {/* Quick navigation */}
+                <QuickNav />
         </div>
     );
 }
